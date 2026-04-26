@@ -1082,6 +1082,99 @@ function listenToOtherUsers(mapInstance) {
     });
 }
 
+// Escuchar y mostrar alertas en el mapa
+window.alertMarkers = {};
+
+function listenToAlerts(mapInstance) {
+    console.log('🚨 Escuchando alertas...');
+    
+    const alertsRef = db.collection('alerts')
+        .orderBy('timestamp', 'desc')
+        .limit(50); // Últimas 50 alertas
+    
+    window.alertsUnsubscribe = alertsRef.onSnapshot((snapshot) => {
+        console.log('📡 Alertas recibidas:', snapshot.size);
+        
+        const now = new Date();
+        const activeAlertIds = new Set();
+        
+        snapshot.forEach((doc) => {
+            const alertData = doc.data();
+            const { latitude, longitude } = alertData.location || {};
+            
+            if (!latitude || !longitude) return;
+            
+            // Verificar que la alerta sea reciente (últimas 2 horas)
+            const alertTime = alertData.timestamp?.toDate();
+            const hoursDiff = alertTime ? (now - alertTime) / 3600000 : 999;
+            
+            if (hoursDiff > 2) return; // Alertas muy viejas no mostrar
+            
+            activeAlertIds.add(doc.id);
+            
+            // Iconos según tipo de alerta
+            const alertIcons = {
+                'bache': { icon: '🕳️', color: '#FF9800', label: 'Bache' },
+                'accidente': { icon: '💥', color: '#F44336', label: 'Accidente' },
+                'obra': { icon: '🚧', color: '#FFC107', label: 'Obra' },
+                'control': { icon: '👮', color: '#2196F3', label: 'Control' },
+                'peligro': { icon: '⚠️', color: '#9C27B0', label: 'Peligro' }
+            };
+            
+            const alertConfig = alertIcons[alertData.type] || alertIcons['peligro'];
+            
+            // Crear icono personalizado
+            const alertIcon = L.divIcon({
+                className: 'alert-marker',
+                html: `<div style="
+                    background: ${alertConfig.color};
+                    width: 32px;
+                    height: 32px;
+                    border-radius: 50%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 18px;
+                    border: 3px solid white;
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+                ">${alertConfig.icon}</div>`,
+                iconSize: [32, 32],
+                iconAnchor: [16, 16]
+            });
+            
+            // Si ya existe, solo actualizar
+            if (window.alertMarkers[doc.id]) {
+                window.alertMarkers[doc.id].setLatLng([latitude, longitude]);
+            } else {
+                // Crear nuevo marcador
+                const marker = L.marker([latitude, longitude], { icon: alertIcon })
+                    .addTo(mapInstance)
+                    .bindPopup(`
+                        <div style="text-align:center; padding:5px;">
+                            <strong>${alertConfig.label}</strong><br>
+                            <small style="color:#666;">
+                                Reportado hace ${Math.round(hoursDiff * 60)} min
+                            </small>
+                        </div>
+                    `);
+                window.alertMarkers[doc.id] = marker;
+            }
+        });
+        
+        // Eliminar marcadores de alertas viejas
+        Object.keys(window.alertMarkers).forEach(id => {
+            if (!activeAlertIds.has(id)) {
+                mapInstance.removeLayer(window.alertMarkers[id]);
+                delete window.alertMarkers[id];
+            }
+        });
+        
+        console.log('🚨 Alertas visibles:', Object.keys(window.alertMarkers).length);
+    }, (error) => {
+        console.error('❌ Error escuchando alertas:', error);
+    });
+}
+
 function sendGreeting(uid, name) { alert(`👋 Has saludado a ${name}`); }
 function sendMessage(uid, name) {
     const msg = prompt(`💬 Enviar mensaje a ${name}:`);
@@ -1149,7 +1242,16 @@ function initMap() {
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
     L.control.zoom({ position: 'bottomright' }).addTo(map);
     
-    if (auth.currentUser) listenToOtherUsers(map);
+    // Inicializar arrays
+    window.userMarkers = {};
+    window.alertMarkers = {};
+    
+    // Escuchar usuarios y alertas
+    if (auth.currentUser) {
+        listenToOtherUsers(map);
+        listenToAlerts(map); // ✅ NUEVO: Escuchar alertas
+    }
+    
     getUserLocation();
 }
 
@@ -1170,7 +1272,7 @@ function logout() {
     if (locationUpdateInterval) clearInterval(locationUpdateInterval);
     if (watchId) navigator.geolocation.clearWatch(watchId);
     if (window.usersUnsubscribe) window.usersUnsubscribe();
-    
+    if (window.alertsUnsubscribe) window.alertsUnsubscribe();
     localStorage.removeItem('motoUser');
     if (auth) {
         auth.signOut().then(() => {
@@ -1185,6 +1287,7 @@ window.addEventListener('beforeunload', () => {
     if (locationUpdateInterval) clearInterval(locationUpdateInterval);
     if (watchId) navigator.geolocation.clearWatch(watchId);
     if (window.usersUnsubscribe) window.usersUnsubscribe();
+    if (window.alertsUnsubscribe) window.alertsUnsubscribe();
 });
 
 // ==================== BÚSQUEDA EN TIEMPO REAL ====================
