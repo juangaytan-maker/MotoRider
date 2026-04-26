@@ -1006,7 +1006,6 @@ function initMap() {
     }
     
     getUserLocation();
-    showRoute('urbana');
 }
 function getUserLocation() {
     if (!navigator.geolocation) return;
@@ -1076,71 +1075,26 @@ function centerOnUser() {
     }
 }
 
-function showRoute(routeType, event) {
-    if (!map) initMap();
-    
-    const route = routes[routeType];
-    if (!route) return;
-    
-    if (event && event.target) {
-        document.querySelectorAll('.route-btn').forEach(btn => {
-            btn.classList.remove('active');
-        });
-        event.target.closest('.route-btn').classList.add('active');
-    } else {
-        document.querySelectorAll('.route-btn').forEach(btn => {
-            btn.classList.remove('active');
-            if (btn.textContent.toLowerCase().includes(routeType)) {
-                btn.classList.add('active');
-            }
-        });
+function initMap() {
+    if (typeof L === 'undefined') {
+        console.warn('⚠️ Leaflet no está cargado aún. Reintentando...');
+        setTimeout(() => initMap(), 500);
+        return;
     }
+    if (map) return;
     
-    if (routeLayer) {
-        map.removeLayer(routeLayer);
-    }
+    const defaultPos = [8.9824, -79.5199];
+    map = L.map('leaflet-map', { zoomControl: false, attributionControl: false }).setView(defaultPos, 13);
     
-    routeLayer = L.polyline(route.path, {
-        color: route.color,
-        weight: 5,
-        opacity: 0.8,
-        dashArray: '10, 10',
-        lineCap: 'round'
-    }).addTo(map);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+    L.control.zoom({ position: 'bottomright' }).addTo(map);
     
-    map.fitBounds(routeLayer.getBounds(), { padding: [50, 50] });
+    window.otherUserMarkers = [];
+    if (auth.currentUser) listenToOtherUsers(map);
     
-    L.marker(route.path[0], {
-        icon: L.divIcon({
-            className: 'route-marker',
-            html: '<div style="background:#4CAF50;width:16px;height:16px;border-radius:50%;border:3px solid white;"></div>',
-            iconSize: [16, 16]
-        })
-    }).addTo(map).bindPopup("Inicio");
-    
-    L.marker(route.path[route.path.length - 1], {
-        icon: L.divIcon({
-            className: 'route-marker',
-            html: '<div style="background:#F44336;width:16px;height:16px;border-radius:50%;border:3px solid white;"></div>',
-            iconSize: [16, 16]
-        })
-    }).addTo(map).bindPopup("Destino");
-    
-    document.getElementById('route-name').textContent = route.name;
-    document.getElementById('route-desc').textContent = route.desc;
-    
-    currentRoute = route;
+    getUserLocation();
 }
 
-function startRoute() {
-    if (!currentRoute) return;
-    
-    showNotification('🏍️ ¡Ruta Iniciada!', `Navegando: ${currentRoute.name}`);
-    
-    setTimeout(() => {
-        showSuccess('¡Buenas rutas!', 'Que disfrutes el recorrido');
-    }, 1000);
-}
 
 const originalNavigateToMap = navigateTo;
 navigateTo = function(screenId) {
@@ -1186,5 +1140,74 @@ window.addEventListener('beforeunload', () => {
     
     if (window.usersUnsubscribe) {
         window.usersUnsubscribe();
+    }
+});
+// ==================== BUSCADOR DE DIRECCIONES ====================
+function searchAddress() {
+    const query = document.getElementById('map-search-input').value.trim();
+    if (!query) return;
+    
+    const resultsDiv = document.getElementById('search-results');
+    resultsDiv.innerHTML = '<div class="search-result-item" style="color:var(--text-secondary);text-align:center;">Buscando...</div>';
+    resultsDiv.classList.add('active');
+    
+    // Usamos Nominatim (OpenStreetMap) - Gratuito y sin API Key
+    fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&accept-language=es`)
+        .then(res => res.json())
+        .then(data => {
+            resultsDiv.innerHTML = '';
+            if (data.length === 0) {
+                resultsDiv.innerHTML = '<div class="search-result-item" style="color:var(--text-secondary);text-align:center;">No se encontraron resultados</div>';
+                return;
+            }
+            
+            data.forEach(place => {
+                const div = document.createElement('div');
+                div.className = 'search-result-item';
+                div.innerHTML = `<i class="fas fa-map-marker-alt"></i> ${place.display_name}`;
+                
+                div.onclick = () => {
+                    const lat = parseFloat(place.lat);
+                    const lng = parseFloat(place.lon);
+                    
+                    // Mover mapa suavemente
+                    map.flyTo([lat, lng], 16, { duration: 1.5 });
+                    
+                    // Marcador temporal
+                    if (window.searchMarker) map.removeLayer(window.searchMarker);
+                    window.searchMarker = L.marker([lat, lng], {
+                        icon: L.divIcon({
+                            className: 'search-marker',
+                            html: '<div style="background:#FF6B35;width:12px;height:12px;border-radius:50%;border:3px solid white;box-shadow:0 4px 10px rgba(0,0,0,0.4);"></div>',
+                            iconSize: [18, 18],
+                            iconAnchor: [9, 9]
+                        })
+                    }).addTo(map).bindPopup(place.display_name).openPopup();
+                    
+                    resultsDiv.classList.remove('active');
+                    document.getElementById('map-search-input').value = '';
+                };
+                resultsDiv.appendChild(div);
+            });
+        })
+        .catch(err => {
+            console.error('Error buscando dirección:', err);
+            resultsDiv.innerHTML = '<div class="search-result-item" style="color:var(--danger);text-align:center;">Error de conexión</div>';
+        });
+}
+
+// Cerrar resultados al hacer clic fuera
+document.addEventListener('click', (e) => {
+    const container = document.querySelector('.map-search-container');
+    const results = document.getElementById('search-results');
+    if (container && !container.contains(e.target) && results) {
+        results.classList.remove('active');
+    }
+});
+
+// Permitir buscar con Enter
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && document.activeElement.id === 'map-search-input') {
+        searchAddress();
     }
 });
