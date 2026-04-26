@@ -1,10 +1,8 @@
 /**
  * 🔥 Firebase Configuration - MotoRider App
  * Proyecto: moto-rider-2
- * Usando SDK Compat para HTML puro
  */
 
-// Configuración de Firebase
 const firebaseConfig = {
     apiKey: "AIzaSyCqY81Aks-q4dWJoVIghPdjRiOv2dG24EA",
     authDomain: "moto-rider-2.firebaseapp.com",
@@ -14,7 +12,6 @@ const firebaseConfig = {
     appId: "1:938395503462:web:2d73720def603384f516a7"
 };
 
-// Inicializar Firebase
 try {
     firebase.initializeApp(firebaseConfig);
     console.log('✅ Firebase inicializado correctamente');
@@ -22,28 +19,23 @@ try {
     console.error('❌ Error al inicializar Firebase:', error);
 }
 
-// Inicializar servicios (usando la versión compat)
 const auth = firebase.auth();
 const db = firebase.firestore();
 
 console.log(' Servicios de Firebase listos:', { auth: !!auth, db: !!db });
 
-// Verificar sesión al cargar
 auth.onAuthStateChanged(async (user) => {
     if (user) {
         console.log('✅ Usuario autenticado:', user.email || user.phoneNumber);
         
         try {
-            // Referencia al usuario en Firestore
             const userRef = db.collection('users').doc(user.uid);
             const userDoc = await userRef.get();
             
             if (!userDoc.exists) {
-                // Usuario nuevo - obtener ubicación
                 console.log('📍 Usuario nuevo, obteniendo ubicación...');
                 const location = await getUserLocation();
                 
-                // Guardar en Firestore
                 await userRef.set({
                     uid: user.uid,
                     email: user.email,
@@ -58,14 +50,12 @@ auth.onAuthStateChanged(async (user) => {
                 
                 console.log('✅ Usuario guardado en Firestore');
             } else {
-                // Actualizar último login
                 await userRef.update({
                     lastLogin: firebase.firestore.FieldValue.serverTimestamp()
                 });
                 console.log('🔄 Último login actualizado');
             }
             
-            // Cargar datos locales
             const existingUser = JSON.parse(localStorage.getItem('motoUser'));
             const userData = {
                 name: user.displayName || 'Motero',
@@ -79,7 +69,6 @@ auth.onAuthStateChanged(async (user) => {
             
             localStorage.setItem('motoUser', JSON.stringify(userData));
             
-            // Actualizar UI
             const displayName = document.getElementById('display-name');
             if (displayName) {
                 const firstName = user.displayName ? user.displayName.split(' ')[0] : 'Motero';
@@ -97,7 +86,6 @@ auth.onAuthStateChanged(async (user) => {
     }
 });
 
-// ✅ OBTENER UBICACIÓN DEL USUARIO
 async function getUserLocation() {
     try {
         const response = await fetch('https://ipapi.co/json/');
@@ -126,7 +114,6 @@ async function getUserLocation() {
     }
 }
 
-// ✅ REGISTRO CON EMAIL/PASSWORD
 function signUpWithEmail(email, password, name) {
     return auth.createUserWithEmailAndPassword(email, password)
         .then((userCredential) => {
@@ -136,12 +123,10 @@ function signUpWithEmail(email, password, name) {
         });
 }
 
-// ✅ LOGIN CON EMAIL/PASSWORD
 function signInWithEmail(email, password) {
     return auth.signInWithEmailAndPassword(email, password);
 }
 
-// ✅ LOGIN CON GOOGLE
 function signInWithGoogle() {
     const provider = new firebase.auth.GoogleAuthProvider();
     auth.signInWithPopup(provider)
@@ -162,22 +147,12 @@ function signInWithGoogle() {
         });
 }
 
-// ✅ LOGIN CON APPLE
 function signInWithApple() {
     if (typeof showAlert === 'function') {
         showAlert('🍎 Próximamente', 'Apple Sign-In requiere configuración adicional.');
     }
 }
 
-// ✅ LOGOUT
-function logout() {
-    auth.signOut().then(() => {
-        localStorage.removeItem('motoUser');
-        location.reload();
-    });
-}
-
-// ✅ ESTADÍSTICAS DE USUARIOS
 async function getUserStats() {
     try {
         const usersSnapshot = await db.collection('users').get();
@@ -209,9 +184,98 @@ async function getUserStats() {
     }
 }
 
-// Exportar para usar en app.js
+// ✅ Guardar ubicación en tiempo real en Firestore
+async function updateUserLocation(lat, lng) {
+    const user = auth.currentUser;
+    if (!user) return;
+    
+    try {
+        await db.collection('users').doc(user.uid).set({
+            uid: user.uid,
+            name: user.displayName || 'Motero',
+            avatarId: JSON.parse(localStorage.getItem('motoUser'))?.avatarId || '1',
+            location: {
+                latitude: lat,
+                longitude: lng,
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            },
+            lastSeen: firebase.firestore.FieldValue.serverTimestamp(),
+            status: 'online'
+        }, { merge: true });
+        
+        console.log('📍 Ubicación actualizada en Firestore');
+    } catch (error) {
+        console.error('Error actualizando ubicación:', error);
+    }
+}
+
+// ✅ Escuchar otros usuarios en el mapa
+function listenToOtherUsers(mapInstance) {
+    const currentUser = auth.currentUser;
+    if (!currentUser) return;
+    
+    const usersRef = db.collection('users')
+        .where('status', '==', 'online')
+        .orderBy('lastSeen', 'desc');
+    
+    window.usersUnsubscribe = usersRef.onSnapshot((snapshot) => {
+        if (window.otherUserMarkers) {
+            window.otherUserMarkers.forEach(marker => mapInstance.removeLayer(marker));
+        }
+        window.otherUserMarkers = [];
+        
+        snapshot.forEach((doc) => {
+            const userData = doc.data();
+            
+            if (userData.uid === currentUser.uid) return;
+            
+            const lastSeen = userData.lastSeen?.toDate();
+            const now = new Date();
+            const minutesDiff = lastSeen ? (now - lastSeen) / 1000 / 60 : 999;
+            
+            if (minutesDiff > 5) return;
+            
+            const { latitude, longitude } = userData.location;
+            
+            const userIcon = L.icon({
+                iconUrl: `avatar/${userData.avatarId || '1'}.png`,
+                iconSize: [50, 50],
+                iconAnchor: [25, 25],
+                popupAnchor: [0, -25]
+            });
+            
+            const marker = L.marker([latitude, longitude], { icon: userIcon })
+                .addTo(mapInstance)
+                .bindPopup(`
+                    <div style="text-align:center; padding:5px;">
+                        <strong>${userData.name || 'Motero'}</strong><br>
+                        <small style="color:#666;">En línea</small>
+                    </div>
+                `);
+            
+            window.otherUserMarkers.push(marker);
+        });
+        
+        console.log(`👥 ${window.otherUserMarkers.length} usuarios en el mapa`);
+    });
+}
+
+// ✅ Marcar usuario como offline al cerrar
+function setUserOffline() {
+    const user = auth.currentUser;
+    if (!user) return;
+    
+    db.collection('users').doc(user.uid).update({
+        status: 'offline',
+        lastSeen: firebase.firestore.FieldValue.serverTimestamp()
+    }).catch(err => console.error('Error setting offline:', err));
+}
+
 window.db = db;
 window.getUserLocation = getUserLocation;
 window.signUpWithEmail = signUpWithEmail;
 window.signInWithEmail = signInWithEmail;
 window.getUserStats = getUserStats;
+window.updateUserLocation = updateUserLocation;
+window.listenToOtherUsers = listenToOtherUsers;
+window.setUserOffline = setUserOffline;
