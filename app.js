@@ -985,34 +985,60 @@ function showBannerOnLogin() { setTimeout(() => { showBanner(); }, 500); }
 function showBannerOnAvatar() { setTimeout(() => { showBanner(); }, 300); }
 
 // ==================== MAPA, UBICACIÓN Y VELOCÍMETRO ====================
+// Agrega esta variable global al inicio (junto a las demás)
+window.userMarkers = {};
+
 function listenToOtherUsers(mapInstance) {
     const currentUser = auth.currentUser;
-    if (!currentUser) return;
+    if (!currentUser) {
+        console.log('❌ No hay usuario autenticado para escuchar otros usuarios');
+        return;
+    }
+    
+    console.log('👥 Escuchando otros usuarios desde:', currentUser.email);
     
     const usersRef = db.collection('users')
         .where('status', '==', 'online')
         .orderBy('lastSeen', 'desc');
     
     window.usersUnsubscribe = usersRef.onSnapshot((snapshot) => {
+        console.log('📡 Snapshot recibido:', snapshot.size, 'usuarios online');
+        
         const now = new Date();
         const activeUids = new Set();
         
         snapshot.forEach((doc) => {
             const userData = doc.data();
-            if (userData.uid === currentUser.uid) return;
             
-            // ✅ Filtro estricto de 3 minutos
+            // No mostrar al usuario actual
+            if (userData.uid === currentUser.uid) {
+                console.log('⏭️ Saltando usuario actual:', userData.name);
+                return;
+            }
+            
+            // Verificar que esté activo (últimos 5 minutos)
             const lastSeen = userData.lastSeen?.toDate();
             const minutesDiff = lastSeen ? (now - lastSeen) / 60000 : 999;
-            if (minutesDiff > 3) return;
+            
+            if (minutesDiff > 5) {
+                console.log('⏰ Usuario', userData.name, 'inactivo hace', minutesDiff.toFixed(1), 'minutos');
+                return;
+            }
             
             activeUids.add(userData.uid);
-            const { latitude, longitude } = userData.location;
-            if (!latitude) return;
+            const { latitude, longitude } = userData.location || {};
+            
+            if (!latitude || !longitude) {
+                console.log('📍 Usuario', userData.name, 'sin ubicación válida');
+                return;
+            }
+            
+            console.log('✅ Mostrando usuario:', userData.name, 'en', latitude, longitude);
 
             const userIcon = L.icon({
                 iconUrl: `avatar/${userData.avatarId || '1'}.png`,
-                iconSize: [45, 45], iconAnchor: [22, 22]
+                iconSize: [45, 45], 
+                iconAnchor: [22, 22]
             });
             
             const popupContent = `
@@ -1026,11 +1052,14 @@ function listenToOtherUsers(mapInstance) {
                 </div>
             `;
 
-            // ✅ Si ya existe, SOLO actualizamos posición (evita parpadeo)
+            // Si ya existe el marcador, solo actualizamos posición
             if (window.userMarkers[userData.uid]) {
+                console.log('🔄 Actualizando posición de', userData.name);
                 window.userMarkers[userData.uid].setLatLng([latitude, longitude]);
                 window.userMarkers[userData.uid].setPopupContent(popupContent);
             } else {
+                // Si es nuevo, lo creamos
+                console.log('➕ Creando marcador para', userData.name);
                 const marker = L.marker([latitude, longitude], { icon: userIcon })
                     .addTo(mapInstance)
                     .bindPopup(popupContent);
@@ -1038,13 +1067,18 @@ function listenToOtherUsers(mapInstance) {
             }
         });
         
-        // ✅ Eliminamos SOLO los marcadores de usuarios desconectados
+        // Eliminar marcadores de usuarios desconectados
         Object.keys(window.userMarkers).forEach(uid => {
             if (!activeUids.has(uid)) {
+                console.log('❌ Eliminando usuario desconectado');
                 mapInstance.removeLayer(window.userMarkers[uid]);
                 delete window.userMarkers[uid];
             }
         });
+        
+        console.log('👥 Total de usuarios visibles:', Object.keys(window.userMarkers).length);
+    }, (error) => {
+        console.error('❌ Error en listenToOtherUsers:', error);
     });
 }
 
