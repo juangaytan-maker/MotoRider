@@ -116,6 +116,11 @@ function handleLogin() {
         .then(() => {
             showSuccess('¡Bienvenido!', 'Has iniciado sesión correctamente.');
             showBannerOnLogin();
+            
+            // ✅ NAVEGAR AL HOME DESPUÉS DEL LOGIN
+            setTimeout(() => {
+                navigateTo('home-screen');
+            }, 1500); // Esperar 1.5 segundos para que se vea el mensaje
         })
         .catch((error) => {
             showAlert('Error de acceso', error.message || 'No se pudo iniciar sesión.');
