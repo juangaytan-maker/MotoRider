@@ -1016,8 +1016,8 @@ function getUserLocation() {
                 // ✅ Crear ícono transparente de Leaflet
                 const customIcon = L.icon({
                     iconUrl: avatarUrl,
-                    iconSize: [60, 60], // Tamaño de tu avatar en el mapa
-                    iconAnchor: [30, 30], // Centrado exacto (mitad del tamaño)
+                    iconSize: [90, 90], // Tamaño de tu avatar en el mapa
+                    iconAnchor: [45, 45], // Centrado exacto (mitad del tamaño)
                     popupAnchor: [0, -25],
                     className: 'user-avatar-marker' // Clase opcional para CSS
                 });
