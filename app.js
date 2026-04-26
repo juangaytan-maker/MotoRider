@@ -1104,25 +1104,26 @@ function listenToAlerts(mapInstance) {
         
         snapshot.forEach((doc) => {
             const alertData = doc.data();
-            const { latitude, longitude } = alertData.location || {};
             
-            // Verificar coordenadas válidas
-            if (!latitude || !longitude) {
-                console.log('❌ Alerta', doc.id, 'sin coordenadas válidas');
-                return;
-            }
-            
-            // Verificar timestamp - usar 24 horas en lugar de 2
-            let hoursDiff = 999;
-            if (alertData.timestamp) {
-                const alertTime = alertData.timestamp.toDate ? alertData.timestamp.toDate() : new Date(alertData.timestamp);
-                hoursDiff = (now - alertTime) / 3600000; // convertir a horas
-            }
-            
-            if (hoursDiff > 24) {
-                console.log('⏰ Alerta', doc.id, 'muy vieja:', hoursDiff.toFixed(1), 'horas');
-                return;
-            }
+            const { lat: latitude, lng: longitude } = alertData.location || {};
+    
+    // Verificar coordenadas válidas
+    if (!latitude || !longitude) {
+        console.log('❌ Alerta', doc.id, 'sin coordenadas válidas. Location:', alertData.location);
+        return;
+    }
+    
+    // Verificar timestamp - usar 24 horas en lugar de 2
+    let hoursDiff = 999;
+    if (alertData.timestamp) {
+        const alertTime = alertData.timestamp.toDate ? alertData.timestamp.toDate() : new Date(alertData.timestamp);
+        hoursDiff = (now - alertTime) / 3600000;
+    }
+    
+    if (hoursDiff > 24) {
+        console.log('⏰ Alerta', doc.id, 'muy vieja:', hoursDiff.toFixed(1), 'horas');
+        return;
+    }
             
             activeAlertIds.add(doc.id);
             visibleCount++;
