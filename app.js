@@ -25,6 +25,17 @@ let promptCallback = null;
 let selectedBikeType = '';
 let editingBikeIndex = -1;
 
+// ✅ FUNCIÓN SEGURA PARA LEER LOCALSTORAGE
+function getStoredUser() {
+    try {
+        const user = localStorage.getItem('motoUser');
+        return user ? JSON.parse(user) : null;
+    } catch (e) {
+        console.error('❌ Error leyendo localStorage:', e);
+        return null;
+    }
+}
+
 // ==================== MODALES PERSONALIZADOS ====================
 function showModal(type, title, message) {
     const modal = document.getElementById('modal-' + type);
@@ -107,7 +118,10 @@ function handleLogin() {
             showSuccess('¡Bienvenido!', 'Has iniciado sesión correctamente.');
             showBannerOnLogin();
         })
-        .catch((error) => showAlert('Error de acceso', error.message || 'No se pudo iniciar sesión.'));}
+        .catch((error) => {
+            showAlert('Error de acceso', error.message || 'No se pudo iniciar sesión.');
+        });
+}
 
 function handleRegister() {
     const name = document.getElementById('reg-name').value.trim();
@@ -156,10 +170,9 @@ document.addEventListener('DOMContentLoaded', function() {
     loadUserAvatar();
     updateWeather();
     
-    const user = localStorage.getItem('motoUser');
+    const user = getStoredUser();
     if (user) {
-        const userData = JSON.parse(user);
-        const firstName = userData.name ? userData.name.split(' ')[0] : 'Motero';
+        const firstName = user.name ? user.name.split(' ')[0] : 'Motero';
         const displayName = document.getElementById('display-name');
         if (displayName) displayName.textContent = '¡Hola, ' + firstName + '!';
         navigateTo('home-screen');
@@ -172,7 +185,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // ==================== CARGAR AVATAR ====================
 function loadUserAvatar() {
-    const user = JSON.parse(localStorage.getItem('motoUser'));
+    const user = getStoredUser();
     const img = document.getElementById('header-avatar-img');
     const icon = document.getElementById('header-default-icon');
     const displayName = document.getElementById('display-name');
@@ -234,7 +247,7 @@ function nextStep(step) {
 function handleNextStep() { 
     if (!selectedAvatar.id) selectedAvatar = { tier: 'free', id: '1', price: 0 }; 
     
-    const user = JSON.parse(localStorage.getItem('motoUser'));
+    const user = getStoredUser();
     if (user && user.avatarId) {
         user.avatarId = selectedAvatar.id;
         user.avatar = selectedAvatar;
@@ -332,7 +345,7 @@ function selectAvatar(element, tier, id) {
         return; 
     }
     
-    const user = JSON.parse(localStorage.getItem('motoUser')) || {};
+    const user = getStoredUser() || {};
     const unlockedAvatars = user.unlockedAvatars || [];
     const avatarKey = tier + '-' + id;
     
@@ -375,7 +388,6 @@ function openPurchaseModal(tier, id) {
 
     document.getElementById('modal-pack-price').textContent = '$' + avatarPackPrices[tier].toFixed(2);
     
-    // Forzar visualización
     modal.style.display = 'flex'; 
     modal.classList.add('active');
 }
@@ -384,22 +396,21 @@ function closePurchaseModal() {
     const modal = document.getElementById('purchase-modal');
     if (modal) {
         modal.classList.remove('active');
-        modal.style.display = 'none'; // Forzar ocultamiento
+        modal.style.display = 'none';
     }
-    pendingAvatar = null; // Limpiar estado
+    pendingAvatar = null;
 }
 
 function completePurchase(type) {
     if (!pendingAvatar) return;
 
-    const user = JSON.parse(localStorage.getItem('motoUser')) || {};
+    const user = getStoredUser() || {};
     if (!user.unlockedAvatars) user.unlockedAvatars = ['free-1', 'free-2'];
 
     if (type === 'single') {
         const avatarKey = pendingAvatar.tier + '-' + pendingAvatar.id;
         if (!user.unlockedAvatars.includes(avatarKey)) {
             user.unlockedAvatars.push(avatarKey);
-            // ✅ Actualiza la tarjeta visualmente INMEDIATAMENTE
             unlockAvatarUI(pendingAvatar.element, pendingAvatar.tier, pendingAvatar.id);
         }
     } else if (type === 'pack') {
@@ -408,7 +419,6 @@ function completePurchase(type) {
             const avatarKey = tier + '-' + avatarId;
             if (!user.unlockedAvatars.includes(avatarKey)) {
                 user.unlockedAvatars.push(avatarKey);
-                // ✅ Desbloquea visualmente todos los avatares del pack
                 document.querySelectorAll('.avatar-option.' + tier).forEach(function(el) {
                     const onclickAttr = el.getAttribute('onclick');
                     if (onclickAttr && onclickAttr.includes("'" + avatarId + "'")) {
@@ -419,13 +429,8 @@ function completePurchase(type) {
         });
     }
 
-    // 1. Guardar en memoria
     localStorage.setItem('motoUser', JSON.stringify(user));
-    
-    // 2. Notificar
     showNotification('🎉 ¡Avatar Desbloqueado!', 'Tu nuevo avatar está listo');
-    
-    // 3. Cerrar modal (pendingAvatar se limpia aquí, pero ya lo usamos arriba)
     closePurchaseModal();
 }
 
@@ -452,7 +457,7 @@ function getAvatarsByTier(tier) {
 }
 
 function loadUnlockedAvatars() {
-    const user = JSON.parse(localStorage.getItem('motoUser')) || {};
+    const user = getStoredUser() || {};
     (user.unlockedAvatars || []).forEach(function(avatarKey) {
         const parts = avatarKey.split('-'); 
         const tier = parts[0], id = parts[1];
@@ -470,7 +475,7 @@ document.addEventListener('click', function(e) {
 
 // ==================== MANTENIMIENTO ====================
 function getNextMaintenance() {
-    const user = JSON.parse(localStorage.getItem('motoUser'));
+    const user = getStoredUser();
     if (!user || !user.bike || !user.bike.type) return null;
     
     const intervals = maintenanceIntervals[user.bike.type] || maintenanceIntervals['default'];
@@ -502,7 +507,7 @@ function updateMaintenanceDisplay() {
 }
 
 function addKilometers() {
-    const user = JSON.parse(localStorage.getItem('motoUser'));
+    const user = getStoredUser();
     if (!user || !user.bike) { 
         showAlert('⚠️ Sin registro', 'No hay usuario registrado.'); 
         return; 
@@ -596,7 +601,7 @@ function openAvatarSelector() {
     
     updateProgress();
     
-    const user = JSON.parse(localStorage.getItem('motoUser'));
+    const user = getStoredUser();
     if (user && user.avatarId) {
         document.querySelectorAll('.avatar-option').forEach(el => {
             const onclickAttr = el.getAttribute('onclick');
@@ -611,7 +616,7 @@ function openAvatarSelector() {
 }
 
 function loadProfileData() {
-    const user = JSON.parse(localStorage.getItem('motoUser'));
+    const user = getStoredUser();
     if (!user) return;
     
     const profileName = document.getElementById('profile-name');
@@ -647,7 +652,7 @@ function loadProfileData() {
 
 // ==================== GESTIÓN DE MOTOS ====================
 function getUserBikes() {
-    const user = JSON.parse(localStorage.getItem('motoUser'));
+    const user = getStoredUser();
     if (!user) return [];
     
     if (Array.isArray(user.bikes)) {
@@ -665,7 +670,7 @@ function getUserBikes() {
 }
 
 function saveUserBikes(bikes) {
-    const user = JSON.parse(localStorage.getItem('motoUser'));
+    const user = getStoredUser();
     if (!user) return;
     
     user.bikes = bikes;
@@ -909,15 +914,12 @@ function closeBanner() {
     if (nav) nav.classList.add('no-banner');
 }
 
-// Mostrar banner al iniciar sesión exitosa
 function showBannerOnLogin() {
-    // Esperar a que termine la transición de pantalla
     setTimeout(() => {
         showBanner();
     }, 500);
 }
 
-// Mostrar banner al abrir selector de avatar
 function showBannerOnAvatar() {
     setTimeout(() => {
         showBanner();
@@ -930,18 +932,17 @@ let userMarker = null;
 let currentRoute = null;
 let routeLayer = null;
 
-// Rutas predefinidas (coordenadas de ejemplo - Panamá)
 const routes = {
     urbana: {
         name: "Ruta Urbana",
         desc: "15 km • 45 min • Dificultad: Fácil",
         color: "#FF6B35",
         path: [
-            [8.9824, -79.5199], // Punto A
+            [8.9824, -79.5199],
             [8.9850, -79.5150],
             [8.9900, -79.5100],
             [8.9950, -79.5050],
-            [9.0000, -79.5000]  // Punto B
+            [9.0000, -79.5000]
         ]
     },
     aventura: {
@@ -969,9 +970,15 @@ const routes = {
 };
 
 function initMap() {
-    if (map) return; // Ya inicializado
+    // ✅ Verificar si Leaflet está cargado
+    if (typeof L === 'undefined') {
+        console.warn('⚠️ Leaflet no está cargado aún. Reintentando...');
+        setTimeout(() => initMap(), 500);
+        return;
+    }
     
-    // Coordenadas iniciales (Panamá - puedes cambiarlas)
+    if (map) return;
+    
     const defaultPos = [8.9824, -79.5199];
     
     map = L.map('leaflet-map', {
@@ -979,20 +986,15 @@ function initMap() {
         attributionControl: false
     }).setView(defaultPos, 13);
     
-    // Agregar capa de OpenStreetMap
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 19
     }).addTo(map);
     
-    // Controles de zoom personalizados (abajo a la derecha)
     L.control.zoom({
         position: 'bottomright'
     }).addTo(map);
     
-    // Obtener ubicación del usuario
     getUserLocation();
-    
-    // Cargar ruta por defecto
     showRoute('urbana');
 }
 
@@ -1003,46 +1005,46 @@ function getUserLocation() {
                 const lat = position.coords.latitude;
                 const lng = position.coords.longitude;
                 
-                // Mover mapa a ubicación del usuario
-                map.setView([lat, lng], 16);
+                if (map) {
+                    map.setView([lat, lng], 16);
+                } else {
+                    console.warn('⚠️ El mapa aún no está inicializado');
+                    return;
+                }
                 
-                // ✅ Obtener avatar actual del usuario
-                const user = JSON.parse(localStorage.getItem('motoUser'));
-                let avatarUrl = 'avatar/1.png'; // Imagen por defecto si falla
+                const user = getStoredUser();
+                let avatarUrl = 'avatar/1.png';
                 if (user && user.avatarId) {
                     avatarUrl = 'avatar/' + user.avatarId + '.png';
                 }
                 
-                // ✅ Crear ícono transparente de Leaflet
                 const customIcon = L.icon({
                     iconUrl: avatarUrl,
-                    iconSize: [90, 90], // Tamaño de tu avatar en el mapa
-                    iconAnchor: [45, 45], // Centrado exacto (mitad del tamaño)
+                    iconSize: [60, 60],
+                    iconAnchor: [30, 30],
                     popupAnchor: [0, -25],
-                    className: 'user-avatar-marker' // Clase opcional para CSS
+                    className: 'user-avatar-marker'
                 });
                 
-                // Remover marcador anterior si existe
                 if (userMarker) {
                     map.removeLayer(userMarker);
                 }
                 
-                // ✅ Agregar el marcador limpio (solo la imagen)
                 userMarker = L.marker([lat, lng], { icon: customIcon }).addTo(map);
                 
-                // Opcional: Un círculo de precisión muy sutil debajo
                 L.circle([lat, lng], {
                     radius: position.coords.accuracy,
                     color: '#FF6B35',
                     fillColor: '#FF6B35',
-                    fillOpacity: 0.05, // Casi invisible
+                    fillOpacity: 0.05,
                     weight: 1
                 }).addTo(map);
             },
             (error) => {
                 console.warn('Error obteniendo ubicación:', error);
-                // Fallback si no da permiso
-                map.setView([8.9824, -79.5199], 13);
+                if (map) {
+                    map.setView([8.9824, -79.5199], 13);
+                }
             }
         );
     }
@@ -1063,14 +1065,12 @@ function showRoute(routeType, event) {
     const route = routes[routeType];
     if (!route) return;
     
-    // Actualizar botones (solo si hay evento)
     if (event && event.target) {
         document.querySelectorAll('.route-btn').forEach(btn => {
             btn.classList.remove('active');
         });
         event.target.closest('.route-btn').classList.add('active');
     } else {
-        // Si no hay evento, actualizar basado en routeType
         document.querySelectorAll('.route-btn').forEach(btn => {
             btn.classList.remove('active');
             if (btn.textContent.toLowerCase().includes(routeType)) {
@@ -1079,12 +1079,10 @@ function showRoute(routeType, event) {
         });
     }
     
-    // Remover ruta anterior
     if (routeLayer) {
         map.removeLayer(routeLayer);
     }
     
-    // Dibujar nueva ruta
     routeLayer = L.polyline(route.path, {
         color: route.color,
         weight: 5,
@@ -1093,10 +1091,8 @@ function showRoute(routeType, event) {
         lineCap: 'round'
     }).addTo(map);
     
-    // Ajustar vista para mostrar toda la ruta
     map.fitBounds(routeLayer.getBounds(), { padding: [50, 50] });
     
-    // Agregar marcadores en inicio y fin
     L.marker(route.path[0], {
         icon: L.divIcon({
             className: 'route-marker',
@@ -1113,7 +1109,6 @@ function showRoute(routeType, event) {
         })
     }).addTo(map).bindPopup("Destino");
     
-    // Actualizar info
     document.getElementById('route-name').textContent = route.name;
     document.getElementById('route-desc').textContent = route.desc;
     
@@ -1125,20 +1120,17 @@ function startRoute() {
     
     showNotification('🏍️ ¡Ruta Iniciada!', `Navegando: ${currentRoute.name}`);
     
-    // Aquí podrías agregar navegación paso a paso
     setTimeout(() => {
         showSuccess('¡Buenas rutas!', 'Que disfrutes el recorrido');
     }, 1000);
 }
 
-// Inicializar mapa cuando se visite la pantalla
 const originalNavigateToMap = navigateTo;
 navigateTo = function(screenId) {
     originalNavigateToMap(screenId);
     if (screenId === 'map-screen') {
         setTimeout(() => {
             initMap();
-            // Recalcular tamaño del mapa
             if (map) {
                 setTimeout(() => map.invalidateSize(), 300);
             }
