@@ -34,14 +34,43 @@ auth.onAuthStateChanged(async (user) => {
             
             if (!userDoc.exists) {
                 console.log('📍 Usuario nuevo, obteniendo ubicación...');
-                const location = await getUserLocation();
+                
+                // ✅ OBTENER UBICACIÓN CON VALORES SEGUROS
+                let location;
+                try {
+                    const response = await fetch('https://ipapi.co/json/', {
+                        signal: AbortSignal.timeout(5000)
+                    });
+                    const data = await response.json();
+                    
+                    location = {
+                        city: data.city || 'Desconocida',
+                        state: data.region || 'Desconocido',
+                        country: data.country_name || 'Desconocido',
+                        countryCode: data.country_code || 'XX',
+                        latitude: typeof data.latitude === 'number' ? data.latitude : 8.9824,
+                        longitude: typeof data.longitude === 'number' ? data.longitude : -79.5199,
+                        timezone: data.timezone || 'UTC'
+                    };
+                } catch (err) {
+                    console.error('Error obteniendo ubicación:', err);
+                    location = {
+                        city: 'Desconocida',
+                        state: 'Desconocido',
+                        country: 'Desconocido',
+                        countryCode: 'XX',
+                        latitude: 8.9824,
+                        longitude: -79.5199,
+                        timezone: 'UTC'
+                    };
+                }
                 
                 await userRef.set({
                     uid: user.uid,
-                    email: user.email,
-                    phoneNumber: user.phoneNumber,
-                    displayName: user.displayName,
-                    photoURL: user.photoURL,
+                    email: user.email || '',
+                    phoneNumber: user.phoneNumber || '',
+                    displayName: user.displayName || 'Motero',
+                    photoURL: user.photoURL || '',
                     provider: user.providerData[0]?.providerId || 'firebase',
                     location: location,
                     registeredAt: firebase.firestore.FieldValue.serverTimestamp(),
