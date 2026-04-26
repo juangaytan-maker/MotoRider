@@ -20,10 +20,9 @@ let selectedAvatar = { tier: 'free', id: '1', price: 0 };
 let pendingAvatar = null;
 let confirmCallback = null;
 let promptCallback = null;
-
-// Variables para gestión de motos
 let selectedBikeType = '';
 let editingBikeIndex = -1;
+let locationUpdateInterval = null;
 
 // ✅ FUNCIÓN SEGURA PARA LEER LOCALSTORAGE
 function getStoredUser() {
@@ -970,7 +969,6 @@ const routes = {
 };
 
 function initMap() {
-    // ✅ Verificar si Leaflet está cargado
     if (typeof L === 'undefined') {
         console.warn('⚠️ Leaflet no está cargado aún. Reintentando...');
         setTimeout(() => initMap(), 500);
@@ -994,6 +992,14 @@ function initMap() {
         position: 'bottomright'
     }).addTo(map);
     
+    // ✅ Inicializar array de marcadores
+    window.otherUserMarkers = [];
+    
+    // ✅ Escuchar otros usuarios en tiempo real
+    if (auth.currentUser) {
+        listenToOtherUsers(map);
+    }
+    
     getUserLocation();
     showRoute('urbana');
 }
@@ -1010,6 +1016,19 @@ function getUserLocation() {
                 } else {
                     console.warn('⚠️ El mapa aún no está inicializado');
                     return;
+                }
+                
+                // ✅ Actualizar ubicación en Firestore
+                if (auth.currentUser) {
+                    updateUserLocation(lat, lng);
+                    
+                    // Actualizar cada 10 segundos
+                    if (locationUpdateInterval) clearInterval(locationUpdateInterval);
+                    locationUpdateInterval = setInterval(() => {
+                        navigator.geolocation.getCurrentPosition((pos) => {
+                            updateUserLocation(pos.coords.latitude, pos.coords.longitude);
+                        });
+                    }, 10000);
                 }
                 
                 const user = getStoredUser();
@@ -1137,3 +1156,37 @@ navigateTo = function(screenId) {
         }, 100);
     }
 };
+
+// ==================== LOGOUT ====================
+function logout() {
+    setUserOffline();
+    
+    if (locationUpdateInterval) {
+        clearInterval(locationUpdateInterval);
+    }
+    
+    if (window.usersUnsubscribe) {
+        window.usersUnsubscribe();
+    }
+    
+    localStorage.removeItem('motoUser');
+    if (auth) {
+        auth.signOut().then(() => {
+            navigateTo('auth-screen');
+            showSuccess('Sesión cerrada', '¡Hasta pronto!');
+        });
+    }
+}
+
+// Limpiar al cerrar página/app
+window.addEventListener('beforeunload', () => {
+    setUserOffline();
+    
+    if (locationUpdateInterval) {
+        clearInterval(locationUpdateInterval);
+    }
+    
+    if (window.usersUnsubscribe) {
+        window.usersUnsubscribe();
+    }
+});
