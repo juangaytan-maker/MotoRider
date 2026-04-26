@@ -1180,12 +1180,14 @@ function listenToAlerts(mapInstance) {
         });
         
         // Eliminar marcadores de alertas viejas
-        Object.keys(window.alertMarkers).forEach(id => {
-            if (!activeAlertIds.has(id)) {
-                console.log('🗑️ Eliminando alerta vieja:', id);
-                mapInstance.removeLayer(window.alertMarkers[id]);
-                delete window.alertMarkers[id];
-            }
+        Object.keys(window.userMarkers).forEach(uid => {
+    if (!activeUids.has(uid)) {
+        console.log('❌ Eliminando marcador de usuario desconectado:', uid);
+        if (window.userMarkers[uid]) {
+            mapInstance.removeLayer(window.userMarkers[uid]);
+            delete window.userMarkers[uid];
+        }
+    }
         });
         
         console.log('🚨 Alertas visibles:', visibleCount, '- Marcadores en mapa:', Object.keys(window.alertMarkers).length);
