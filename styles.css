@@ -515,21 +515,23 @@ img { max-width: 100%; display: block; }
     background: var(--primary-dark);
 }
 
-/* Ajustes responsive */
+/*  FORZAR VISIBILIDAD DE LA BARRA EN MÓVIL */
 @media (max-width: 480px) {
-    .map-header h2 {
-        font-size: 16px;
+    .bottom-nav {
+        position: fixed !important; /* Fijo al fondo */
+        bottom: 0 !important;
+        left: 0;
+        right: 0;
+        display: flex !important; /* Forzar visualización */
+        justify-content: space-around;
+        background: var(--bg-card);
+        padding: 10px 0 20px 0 !important; /* Un poco de espacio abajo para el notch */
+        z-index: 9999 !important; /* Por encima de todo */
+        box-shadow: 0 -5px 15px rgba(0,0,0,0.3);
     }
-    .route-info {
-        bottom: 70px;
-        left: 10px;
-        right: 10px;
-        padding: 12px;
-    }
-    .route-info-content h4 {
-        font-size: 14px;
-    }
-    .route-info-content p {
-        font-size: 11px;
+    
+    /* Asegurar que el contenido no quede tapado por la barra */
+    .screen.active {
+        padding-bottom: 60px !important;
     }
 }
