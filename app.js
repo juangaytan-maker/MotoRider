@@ -1085,32 +1085,47 @@ function listenToOtherUsers(mapInstance) {
 // Escuchar y mostrar alertas en el mapa
 window.alertMarkers = {};
 
+// Escuchar y mostrar alertas en el mapa
+window.alertMarkers = {};
+
 function listenToAlerts(mapInstance) {
     console.log('🚨 Escuchando alertas...');
     
     const alertsRef = db.collection('alerts')
         .orderBy('timestamp', 'desc')
-        .limit(50); // Últimas 50 alertas
+        .limit(50);
     
     window.alertsUnsubscribe = alertsRef.onSnapshot((snapshot) => {
         console.log('📡 Alertas recibidas:', snapshot.size);
         
         const now = new Date();
         const activeAlertIds = new Set();
+        let visibleCount = 0;
         
         snapshot.forEach((doc) => {
             const alertData = doc.data();
             const { latitude, longitude } = alertData.location || {};
             
-            if (!latitude || !longitude) return;
+            // Verificar coordenadas válidas
+            if (!latitude || !longitude) {
+                console.log('❌ Alerta', doc.id, 'sin coordenadas válidas');
+                return;
+            }
             
-            // Verificar que la alerta sea reciente (últimas 2 horas)
-            const alertTime = alertData.timestamp?.toDate();
-            const hoursDiff = alertTime ? (now - alertTime) / 3600000 : 999;
+            // Verificar timestamp - usar 24 horas en lugar de 2
+            let hoursDiff = 999;
+            if (alertData.timestamp) {
+                const alertTime = alertData.timestamp.toDate ? alertData.timestamp.toDate() : new Date(alertData.timestamp);
+                hoursDiff = (now - alertTime) / 3600000; // convertir a horas
+            }
             
-            if (hoursDiff > 2) return; // Alertas muy viejas no mostrar
+            if (hoursDiff > 24) {
+                console.log('⏰ Alerta', doc.id, 'muy vieja:', hoursDiff.toFixed(1), 'horas');
+                return;
+            }
             
             activeAlertIds.add(doc.id);
+            visibleCount++;
             
             // Iconos según tipo de alerta
             const alertIcons = {
@@ -1147,13 +1162,15 @@ function listenToAlerts(mapInstance) {
                 window.alertMarkers[doc.id].setLatLng([latitude, longitude]);
             } else {
                 // Crear nuevo marcador
+                console.log('✅ Mostrando alerta:', alertData.label || alertData.type, 'en', latitude, longitude);
                 const marker = L.marker([latitude, longitude], { icon: alertIcon })
                     .addTo(mapInstance)
                     .bindPopup(`
                         <div style="text-align:center; padding:5px;">
                             <strong>${alertConfig.label}</strong><br>
                             <small style="color:#666;">
-                                Reportado hace ${Math.round(hoursDiff * 60)} min
+                                ${alertData.label || 'Reportado'}<br>
+                                Hace ${hoursDiff < 1 ? Math.round(hoursDiff * 60) + ' min' : hoursDiff.toFixed(1) + ' hrs'}
                             </small>
                         </div>
                     `);
@@ -1164,12 +1181,13 @@ function listenToAlerts(mapInstance) {
         // Eliminar marcadores de alertas viejas
         Object.keys(window.alertMarkers).forEach(id => {
             if (!activeAlertIds.has(id)) {
+                console.log('🗑️ Eliminando alerta vieja:', id);
                 mapInstance.removeLayer(window.alertMarkers[id]);
                 delete window.alertMarkers[id];
             }
         });
         
-        console.log('🚨 Alertas visibles:', Object.keys(window.alertMarkers).length);
+        console.log('🚨 Alertas visibles:', visibleCount, '- Marcadores en mapa:', Object.keys(window.alertMarkers).length);
     }, (error) => {
         console.error('❌ Error escuchando alertas:', error);
     });
