@@ -1005,68 +1005,83 @@ function initMap() {
     showRoute('urbana');
 }
 function getUserLocation() {
-    if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-            (position) => {
-                const lat = position.coords.latitude;
-                const lng = position.coords.longitude;
-                
-                if (map) {
-                    map.setView([lat, lng], 16);
-                } else {
-                    console.warn('⚠️ El mapa aún no está inicializado');
-                    return;
-                }
-                
-                // ✅ Actualizar ubicación en Firestore
-                if (auth.currentUser) {
-                    updateUserLocation(lat, lng);
-                    
-                    // Actualizar cada 10 segundos
-                    if (locationUpdateInterval) clearInterval(locationUpdateInterval);
-                    locationUpdateInterval = setInterval(() => {
-                        navigator.geolocation.getCurrentPosition((pos) => {
-                            updateUserLocation(pos.coords.latitude, pos.coords.longitude);
-                        });
-                    }, 10000);
-                }
-                
-                const user = getStoredUser();
-                let avatarUrl = 'avatar/1.png';
-                if (user && user.avatarId) {
-                    avatarUrl = 'avatar/' + user.avatarId + '.png';
-                }
-                
-                const customIcon = L.icon({
-                    iconUrl: avatarUrl,
-                    iconSize: [60, 60],
-                    iconAnchor: [30, 30],
-                    popupAnchor: [0, -25],
-                    className: 'user-avatar-marker'
-                });
-                
-                if (userMarker) {
-                    map.removeLayer(userMarker);
-                }
-                
-                userMarker = L.marker([lat, lng], { icon: customIcon }).addTo(map);
-                
-                L.circle([lat, lng], {
-                    radius: position.coords.accuracy,
-                    color: '#FF6B35',
-                    fillColor: '#FF6B35',
-                    fillOpacity: 0.05,
-                    weight: 1
-                }).addTo(map);
-            },
-            (error) => {
-                console.warn('Error obteniendo ubicación:', error);
-                if (map) {
-                    map.setView([8.9824, -79.5199], 13);
-                }
-            }
-        );
+    if (!navigator.geolocation) {
+        console.warn('❌ Geolocalización no soportada');
+        return;
     }
+    
+    // ✅ OBTENER UBICACIÓN INICIAL
+    navigator.geolocation.getCurrentPosition(
+        (position) => {
+            const lat = position.coords.latitude;
+            const lng = position.coords.longitude;
+            
+            console.log('📍 Ubicación inicial:', lat, lng);
+            
+            if (map) {
+                map.setView([lat, lng], 16);
+            } else {
+                console.warn('⚠️ El mapa aún no está inicializado');
+                return;
+            }
+            
+            // ✅ ACTUALIZAR EN FIRESTORE INMEDIATAMENTE
+            if (auth.currentUser) {
+                updateUserLocation(lat, lng);
+            }
+            
+            // ✅ ACTUALIZAR CADA 5 SEGUNDOS (más frecuente)
+            if (locationUpdateInterval) {
+                clearInterval(locationUpdateInterval);
+            }
+            
+            locationUpdateInterval = setInterval(() => {
+                navigator.geolocation.getCurrentPosition(
+                    (pos) => {
+                        const newLat = pos.coords.latitude;
+                        const newLng = pos.coords.longitude;
+                        
+                        console.log('🔄 Actualizando ubicación:', newLat, newLng);
+                        
+                        // Actualizar mapa
+                        if (map) {
+                            // Opcional: seguir al usuario si está cerca del centro
+                            // map.setView([newLat, newLng], 16);
+                        }
+                        
+                        // Actualizar Firestore
+                        if (auth.currentUser) {
+                            updateUserLocation(newLat, newLng);
+                        }
+                        
+                        // Actualizar marcador visualmente
+                        if (userMarker) {
+                            userMarker.setLatLng([newLat, newLng]);
+                        }
+                    },
+                    (error) => {
+                        console.warn('⚠️ Error en actualización periódica:', error);
+                    },
+                    {
+                        enableHighAccuracy: true,  // ✅ Usar GPS de alta precisión
+                        timeout: 10000,             // Timeout de 10 segundos
+                        maximumAge: 0               // No usar caché
+                    }
+                );
+            }, 5000); // Cada 5 segundos
+        },
+        (error) => {
+            console.warn('❌ Error obteniendo ubicación inicial:', error);
+            if (map) {
+                map.setView([8.9824, -79.5199], 13);
+            }
+        },
+        {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 0
+        }
+    );
 }
 
 function centerOnUser() {
