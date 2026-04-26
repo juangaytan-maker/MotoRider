@@ -300,30 +300,11 @@
     
     <!-- Controles de Rutas -->
     <div class="map-controls">
-        <button class="route-btn active" onclick="showRoute('urbana', event)">
-    <i class="fas fa-city"></i> Urbana
-</button>
-<button class="route-btn" onclick="showRoute('aventura', event)">
-    <i class="fas fa-mountain"></i> Aventura
-</button>
-<button class="route-btn" onclick="showRoute('costera', event)">
-    <i class="fas fa-water"></i> Costera
-</button>
+        
     </div>
     
     <!-- El Mapa -->
     <div id="leaflet-map"></div>
-    
-    <!-- Info de Ruta -->
-    <div id="route-info" class="route-info">
-        <div class="route-info-content">
-            <h4 id="route-name">Ruta Urbana</h4>
-            <p id="route-desc">15 km • 45 min • Dificultad: Fácil</p>
-        </div>
-        <button class="btn-start-route" onclick="startRoute()">
-            <i class="fas fa-play"></i> Iniciar
-        </button>
-    </div>
     
     <nav class="bottom-nav">
         <button class="nav-item" onclick="navigateTo('home-screen')">Home</button>
