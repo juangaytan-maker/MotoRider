@@ -23,8 +23,10 @@ let promptCallback = null;
 let selectedBikeType = '';
 let editingBikeIndex = -1;
 let locationUpdateInterval = null;
+let watchId = null;
+let searchTimeout = null;
 
-// ✅ FUNCIÓN SEGURA PARA LEER LOCALSTORAGE
+// ==================== UTILIDADES ====================
 function getStoredUser() {
     try {
         const user = localStorage.getItem('motoUser');
@@ -35,7 +37,7 @@ function getStoredUser() {
     }
 }
 
-// ==================== MODALES PERSONALIZADOS ====================
+// ==================== MODALES ====================
 function showModal(type, title, message) {
     const modal = document.getElementById('modal-' + type);
     const titleEl = document.getElementById('modal-' + type + '-title');
@@ -72,7 +74,7 @@ function submitPrompt() {
     closeModal('prompt'); 
 }
 
-// ==================== NORMAS DE LA COMUNIDAD ====================
+// ==================== NORMAS ====================
 function showCommunityRules() { showModal('rules', 'Normas de la Comunidad', ''); }
 
 function validateRulesAcceptance() {
@@ -116,10 +118,7 @@ function handleLogin() {
         .then(() => {
             showSuccess('¡Bienvenido!', 'Has iniciado sesión correctamente.');
             showBannerOnLogin();
-            // ✅ AVANZAR AL HOME AUTOMÁTICAMENTE
-            setTimeout(() => {
-                navigateTo('home-screen');
-            }, 1500);
+            setTimeout(() => { navigateTo('home-screen'); }, 1500);
         })
         .catch((error) => {
             showAlert('Error de acceso', error.message || 'No se pudo iniciar sesión.');
@@ -186,7 +185,7 @@ document.addEventListener('DOMContentLoaded', function() {
     setTimeout(showBanner, 2000);
 });
 
-// ==================== CARGAR AVATAR ====================
+// ==================== AVATAR & UI ====================
 function loadUserAvatar() {
     const user = getStoredUser();
     const img = document.getElementById('header-avatar-img');
@@ -209,7 +208,6 @@ function loadUserAvatar() {
     }
 }
 
-// ==================== NAVEGACIÓN ====================
 function navigateTo(screenId) {
     window.scrollTo(0, 0);
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -220,7 +218,6 @@ function navigateTo(screenId) {
     if (screenId === 'my-bikes-screen') loadMyBikesScreen();
 }
 
-// ==================== ONBOARDING ====================
 function startOnboarding() {
     const nameInput = document.getElementById('reg-name');
     if (!nameInput || !nameInput.value.trim()) { 
@@ -277,7 +274,6 @@ function selectBike(element, type) {
     element.classList.add('selected'); 
 }
 
-// ==================== FINALIZAR ONBOARDING ====================
 function finishOnboarding() {
     if (!validateRulesAcceptance()) { 
         setTimeout(() => showCommunityRules(), 500); 
@@ -341,7 +337,7 @@ function finishOnboarding() {
     });
 }
 
-// ==================== AVATARES ====================
+// ==================== AVATARES & PAGOS ====================
 function selectAvatar(element, tier, id) {
     if (element.classList.contains('coming-soon')) { 
         showComingSoon(); 
@@ -352,11 +348,13 @@ function selectAvatar(element, tier, id) {
     const unlockedAvatars = user.unlockedAvatars || [];
     const avatarKey = tier + '-' + id;
     
+    // ✅ Solo permitir selección si es FREE o ya está DESBLOQUEADO
     if (tier === 'free' || unlockedAvatars.includes(avatarKey)) { 
         selectAvatarUI(element, tier, id); 
         return; 
     }
     
+    // ✅ Si está bloqueado, ABRIR MODAL DE PAGO (NO desbloquear)
     pendingAvatar = { tier: tier, id: id, element: element, price: avatarPrices[tier] };
     openPurchaseModal(tier, id);
 }
@@ -372,40 +370,150 @@ function showComingSoon() {
     showNotification('🚧 Próximamente', 'Este avatar estará disponible muy pronto'); 
 }
 
-// ==================== MODAL DE COMPRA ====================
+// Función para abrir modal de selección de pago
 function openPurchaseModal(tier, id) {
-    const modal = document.getElementById('purchase-modal');
-    const tierConfig = { 
-        'standard': { name: 'Estándar', color: '#4CAF50' }, 
-        'premium': { name: 'Premium', color: '#2196F3' }, 
-        'gold': { name: 'GOLD', color: '#FFD700' } 
-    };
-    
+    let price = avatarPrices[tier] || 0;
+    document.getElementById('modal-total-price').textContent = `$${price} USD`;
     document.getElementById('modal-avatar-img').src = 'avatar/' + id + '.png';
     document.getElementById('modal-title').textContent = 'Avatar ' + id;
     
     const badge = document.getElementById('modal-avatar-tier');
     badge.textContent = tier.toUpperCase();
-    badge.style.background = tierConfig[tier].color;
+    badge.style.background = tier === 'gold' ? '#FFD700' : (tier === 'premium' ? '#9C27B0' : '#2196F3');
     badge.style.color = tier === 'gold' ? '#000' : '#fff';
 
-    document.getElementById('modal-pack-price').textContent = '$' + avatarPackPrices[tier].toFixed(2);
+    pendingAvatar = { tier, id };
     
+    const modal = document.getElementById('purchase-modal');
     modal.style.display = 'flex'; 
     modal.classList.add('active');
+}
+
+// Función que se llama al hacer clic en un botón de pago
+function processPayment(method) {
+    if (!pendingAvatar) {
+        showAlert('⚠️ Error', 'No hay avatar seleccionado');
+        return;
+    }
+    
+    // Mostrar confirmación antes de procesar
+    showConfirm(
+        'Confirmar Compra',
+        `¿Deseas comprar este avatar por $${pendingAvatar.price} USD vía ${method}?`,
+        function(confirmed) {
+            if (confirmed) {
+                // Simular procesamiento
+                showAlert('⏳ Procesando...', `Conectando con ${method}...`);
+                
+                setTimeout(() => {
+                    closeModal('info'); // Cerrar alerta de "procesando"
+                    completePurchase('single');
+                    showSuccess('✅ ¡Pago Exitoso!', `Tu compra vía ${method} fue aprobada.`);
+                }, 1500);
+            }
+        }
+    );
+}
+
+// Asegurar que selectAvatar NO desbloquee
+function selectAvatar(element, tier, id) {
+    if (element.classList.contains('coming-soon')) { 
+        showComingSoon(); 
+        return; 
+    }
+    
+    const user = getStoredUser() || {};
+    const unlockedAvatars = user.unlockedAvatars || [];
+    const avatarKey = tier + '-' + id;
+    
+    // ✅ VERIFICACIÓN ESTRICTA: Solo free o desbloqueados
+    if (tier === 'free') {
+        selectAvatarUI(element, tier, id);
+        return;
+    }
+    
+    if (unlockedAvatars.includes(avatarKey)) {
+        selectAvatarUI(element, tier, id);
+        return;
+    }
+    
+    // ✅ Si llega aquí, está BLOQUEADO - Abrir modal de pago
+    pendingAvatar = { tier: tier, id: id, element: element, price: avatarPrices[tier] };
+    openPurchaseModal(tier, id);
+}
+
+// completePurchase debe ser la ÚNICA que desbloquea
+function completePurchase(type) {
+    if (!pendingAvatar) {
+        console.error('❌ Error: completePurchase llamado sin pendingAvatar');
+        return;
+    }
+
+    const user = getStoredUser() || {};
+    if (!user.unlockedAvatars) user.unlockedAvatars = ['free-1', 'free-2'];
+
+    const avatarKey = pendingAvatar.tier + '-' + pendingAvatar.id;
+    
+    // Verificar que no esté ya desbloqueado
+    if (user.unlockedAvatars.includes(avatarKey)) {
+        console.log('ℹ️ Avatar ya estaba desbloqueado');
+        selectAvatarUI(pendingAvatar.element, pendingAvatar.tier, pendingAvatar.id);
+        return;
+    }
+
+    // ✅ DESBLOQUEAR SOLO AQUÍ
+    if (type === 'single') {
+        user.unlockedAvatars.push(avatarKey);
+        if (pendingAvatar.element) {
+            unlockAvatarUI(pendingAvatar.element, pendingAvatar.tier, pendingAvatar.id);
+        }
+    } else if (type === 'pack') {
+        const tier = pendingAvatar.tier;
+        getAvatarsByTier(tier).forEach(function(avId) {
+            const key = tier + '-' + avId;
+            if (!user.unlockedAvatars.includes(key)) {
+                user.unlockedAvatars.push(key);
+            }
+        });
+    }
+
+    localStorage.setItem('motoUser', JSON.stringify(user));
+    console.log(`✅ Avatar desbloqueado: ${avatarKey}`);
+    
+    // Auto-seleccionar después de desbloquear
+    setTimeout(() => {
+        if (pendingAvatar && pendingAvatar.element) {
+            selectAvatarUI(pendingAvatar.element, pendingAvatar.tier, pendingAvatar.id);
+        }
+    }, 500);
 }
 
 function closePurchaseModal() {
     const modal = document.getElementById('purchase-modal');
     if (modal) {
         modal.classList.remove('active');
-        modal.style.display = 'none';
+        setTimeout(() => { modal.style.display = 'none'; }, 300);
     }
     pendingAvatar = null;
 }
 
-function completePurchase(type) {
+function processPayment(method) {
     if (!pendingAvatar) return;
+    
+    showAlert('⏳ Procesando pago...', `Conectando con ${method}. Por favor espera.`);
+    
+    setTimeout(() => {
+        completePurchase('single');
+        closePurchaseModal();
+        showSuccess('✅ ¡Pago Exitoso!', `Tu compra vía ${method} fue aprobada.`);
+    }, 2000);
+}
+
+function completePurchase(type) {
+    if (!pendingAvatar) {
+        showAlert('⚠️ Error', 'No hay avatar pendiente de compra');
+        return;
+    }
 
     const user = getStoredUser() || {};
     if (!user.unlockedAvatars) user.unlockedAvatars = ['free-1', 'free-2'];
@@ -414,7 +522,7 @@ function completePurchase(type) {
         const avatarKey = pendingAvatar.tier + '-' + pendingAvatar.id;
         if (!user.unlockedAvatars.includes(avatarKey)) {
             user.unlockedAvatars.push(avatarKey);
-            unlockAvatarUI(pendingAvatar.element, pendingAvatar.tier, pendingAvatar.id);
+            if(pendingAvatar.element) unlockAvatarUI(pendingAvatar.element, pendingAvatar.tier, pendingAvatar.id);
         }
     } else if (type === 'pack') {
         const tier = pendingAvatar.tier;
@@ -435,9 +543,17 @@ function completePurchase(type) {
     localStorage.setItem('motoUser', JSON.stringify(user));
     showNotification('🎉 ¡Avatar Desbloqueado!', 'Tu nuevo avatar está listo');
     closePurchaseModal();
+    
+    // ✅ Opcional: Auto-seleccionar el avatar recién desbloqueado
+    setTimeout(() => {
+        if (pendingAvatar && pendingAvatar.element) {
+            selectAvatarUI(pendingAvatar.element, pendingAvatar.tier, pendingAvatar.id);
+        }
+    }, 500);
 }
 
 function unlockAvatarUI(element, tier, id) {
+    if(!element) return;
     element.classList.add('unlocked'); 
     element.classList.remove('locked');
     const lockOverlay = element.querySelector('.lock-overlay'); 
@@ -475,6 +591,66 @@ document.addEventListener('click', function(e) {
     const modal = document.getElementById('purchase-modal'); 
     if (e.target === modal) closePurchaseModal(); 
 });
+
+// ==================== SISTEMA DE CÓDIGOS ====================
+function openRedeemModal() {
+    closePurchaseModal();
+    setTimeout(() => {
+        document.getElementById('redeem-modal').classList.add('active');
+        document.getElementById('redeem-input').value = '';
+        document.getElementById('redeem-input').focus();
+    }, 300);
+}
+
+function closeRedeemModal() {
+    document.getElementById('redeem-modal').classList.remove('active');
+}
+
+async function verifyCode() {
+    const codeInput = document.getElementById('redeem-input').value.trim().toUpperCase();
+    if (!codeInput) return;
+
+    try {
+        const snapshot = await db.collection('promoCodes').where('code', '==', codeInput).get();
+        
+        if (snapshot.empty) {
+            showAlert('❌ Código Inválido', 'Este código no existe o ha expirado.');
+            return;
+        }
+
+        const docData = snapshot.docs[0].data();
+        if(docData.used) {
+             showAlert('❌ Código Usado', 'Este código ya fue canjeado.');
+             return;
+        }
+        
+        const tierToUnlock = docData.tier || 'gold';
+        unlockAllAvatarsInTier(tierToUnlock);
+        
+        showSuccess('🎉 ¡Código Canjeado!', `Has desbloqueado avatares ${tierToUnlock}.`);
+        closeRedeemModal();
+        
+        await db.collection('promoCodes').doc(snapshot.docs[0].id).update({ used: true });
+
+    } catch (error) {
+        console.error("Error verificando código:", error);
+        showAlert('⚠️ Error', 'No se pudo verificar el código. Intenta de nuevo.');
+    }
+}
+
+function unlockAllAvatarsInTier(tier) {
+    const user = getStoredUser();
+    if (!user) return;
+    if (!user.unlockedAvatars) user.unlockedAvatars = [];
+    
+    getAvatarsByTier(tier).forEach(id => {
+        const key = tier + '-' + id;
+        if (!user.unlockedAvatars.includes(key)) user.unlockedAvatars.push(key);
+    });
+    
+    localStorage.setItem('motoUser', JSON.stringify(user));
+    loadUnlockedAvatars();
+}
 
 // ==================== MANTENIMIENTO ====================
 function getNextMaintenance() {
@@ -530,7 +706,7 @@ function addKilometers() {
     });
 }
 
-// ==================== CLIMA EN TIEMPO REAL ====================
+// ==================== CLIMA ====================
 function updateWeather() {
     const tempEl = document.getElementById('weather-temp');
     const iconEl = document.getElementById('weather-icon');
@@ -569,7 +745,7 @@ function updateWeather() {
     });
 }
 
-// ==================== NOTIFICACIONES TOAST ====================
+// ==================== NOTIFICACIONES ====================
 function showNotification(title, message) {
     const existing = document.querySelector('.app-notification'); 
     if (existing) existing.remove();
@@ -594,7 +770,7 @@ function showNotification(title, message) {
     }, 3000);
 }
 
-// ==================== PERFIL ====================
+// ==================== PERFIL & MOTOS ====================
 function openAvatarSelector() {
     navigateTo('onboarding-screen');
     currentStep = 1;
@@ -653,7 +829,6 @@ function loadProfileData() {
     }
 }
 
-// ==================== GESTIÓN DE MOTOS ====================
 function getUserBikes() {
     const user = getStoredUser();
     if (!user) return [];
@@ -687,32 +862,18 @@ function saveUserBikes(bikes) {
 
 function getBikeIcon(type) {
     const icons = {
-        'urbana': 'fas fa-city',
-        'scooter': 'fas fa-motorcycle',
-        'deportiva': 'fas fa-tachometer-alt',
-        'aventura': 'fas fa-globe-americas',
-        'trail': 'fas fa-mountain',
-        'cross': 'fas fa-flag-checkered',
-        'crucero': 'fas fa-road',
-        'chopper': 'fas fa-motorcycle',
-        'bobber': 'fas fa-motorcycle',
-        'proyecto': 'fas fa-tools'
+        'urbana': 'fas fa-city', 'scooter': 'fas fa-motorcycle', 'deportiva': 'fas fa-tachometer-alt',
+        'aventura': 'fas fa-globe-americas', 'trail': 'fas fa-mountain', 'cross': 'fas fa-flag-checkered',
+        'crucero': 'fas fa-road', 'chopper': 'fas fa-motorcycle', 'bobber': 'fas fa-motorcycle', 'proyecto': 'fas fa-tools'
     };
     return icons[type] || 'fas fa-motorcycle';
 }
 
 function getBikeTypeName(type) {
     const names = {
-        'urbana': 'Urbana',
-        'scooter': 'Scooter',
-        'deportiva': 'Deportiva',
-        'aventura': 'Aventura',
-        'trail': 'Trail',
-        'cross': 'Cross',
-        'crucero': 'Crucero',
-        'chopper': 'Chopper',
-        'bobber': 'Bobber',
-        'proyecto': 'Proyecto'
+        'urbana': 'Urbana', 'scooter': 'Scooter', 'deportiva': 'Deportiva',
+        'aventura': 'Aventura', 'trail': 'Trail', 'cross': 'Cross',
+        'crucero': 'Crucero', 'chopper': 'Chopper', 'bobber': 'Bobber', 'proyecto': 'Proyecto'
     };
     return names[type] || type;
 }
@@ -765,7 +926,6 @@ function showAddBikeModal() {
     document.getElementById('bike-modal-selected-type').value = '';
     
     document.querySelectorAll('.bike-type-option').forEach(el => el.classList.remove('selected'));
-    
     document.getElementById('bike-modal').classList.add('active');
     document.body.style.overflow = 'hidden';
 }
@@ -803,7 +963,6 @@ function closeBikeModal() {
 function selectBikeType(type) {
     selectedBikeType = type;
     document.getElementById('bike-modal-selected-type').value = type;
-    
     document.querySelectorAll('.bike-type-option').forEach(el => {
         el.classList.toggle('selected', el.dataset.type === type);
     });
@@ -818,7 +977,6 @@ function saveBike() {
         showAlert('⚠️ Tipo requerido', 'Selecciona el tipo de moto.');
         return;
     }
-    
     if (!model) {
         showAlert('⚠️ Modelo requerido', 'Ingresa el modelo de tu moto.');
         return;
@@ -828,9 +986,7 @@ function saveBike() {
     const isEditing = editingBikeIndex >= 0;
     
     const bikeData = {
-        type: type,
-        model: model,
-        currentKm: km,
+        type: type, model: model, currentKm: km,
         lastMaintenance: { oil: km, tires: km, general: km }
     };
     
@@ -838,9 +994,7 @@ function saveBike() {
         bikeData.active = bikes[editingBikeIndex].active;
         bikes[editingBikeIndex] = bikeData;
     } else {
-        if (bikes.length === 0) {
-            bikeData.active = true;
-        }
+        if (bikes.length === 0) bikeData.active = true;
         bikes.push(bikeData);
     }
     
@@ -849,11 +1003,7 @@ function saveBike() {
     loadMyBikesScreen();
     loadProfileData();
     updateMaintenanceDisplay();
-    
-    showSuccess(
-        isEditing ? '¡Moto actualizada!' : '¡Moto agregada!', 
-        isEditing ? 'Los datos se guardaron correctamente.' : 'Tu nueva moto ha sido registrada.'
-    );
+    showSuccess(isEditing ? '¡Moto actualizada!' : '¡Moto agregada!', isEditing ? 'Los datos se guardaron correctamente.' : 'Tu nueva moto ha sido registrada.');
 }
 
 function deleteBike(index) {
@@ -871,11 +1021,7 @@ function deleteBike(index) {
             if (confirmed) {
                 const wasActive = bike.active;
                 bikes.splice(index, 1);
-                
-                if (wasActive && bikes.length > 0) {
-                    bikes[0].active = true;
-                }
-                
+                if (wasActive && bikes.length > 0) bikes[0].active = true;
                 saveUserBikes(bikes);
                 loadMyBikesScreen();
                 loadProfileData();
@@ -888,23 +1034,19 @@ function deleteBike(index) {
 
 function setActiveBike(index) {
     const bikes = getUserBikes();
-    
     bikes.forEach(b => b.active = false);
     bikes[index].active = true;
-    
     saveUserBikes(bikes);
     loadMyBikesScreen();
     loadProfileData();
     updateMaintenanceDisplay();
-    
     showNotification('🏍️ Moto activa', `Ahora usas: ${bikes[index].model}`);
 }
 
-// ==================== BANNER DE ANUNCIOS ====================
+// ==================== BANNER ====================
 function showBanner() {
     const banner = document.getElementById('app-banner');
     const nav = document.querySelector('.bottom-nav');
-    
     if (banner) banner.classList.add('show');
     if (nav) nav.classList.remove('no-banner');
 }
@@ -912,157 +1054,95 @@ function showBanner() {
 function closeBanner() {
     const banner = document.getElementById('app-banner');
     const nav = document.querySelector('.bottom-nav');
-    
     if (banner) banner.classList.remove('show');
     if (nav) nav.classList.add('no-banner');
 }
 
-function showBannerOnLogin() {
-    setTimeout(() => {
-        showBanner();
-    }, 500);
-}
+function showBannerOnLogin() { setTimeout(() => { showBanner(); }, 500); }
+function showBannerOnAvatar() { setTimeout(() => { showBanner(); }, 300); }
 
-function showBannerOnAvatar() {
-    setTimeout(() => {
-        showBanner();
-    }, 300);
-}
-
-// ==================== MAPA INTERACTIVO ====================
+// ==================== MAPA, UBICACIÓN Y VELOCÍMETRO ====================
 let map = null;
 let userMarker = null;
-let currentRoute = null;
-let routeLayer = null;
 
-const routes = {
-    urbana: {
-        name: "Ruta Urbana",
-        desc: "15 km • 45 min • Dificultad: Fácil",
-        color: "#FF6B35",
-        path: [
-            [8.9824, -79.5199],
-            [8.9850, -79.5150],
-            [8.9900, -79.5100],
-            [8.9950, -79.5050],
-            [9.0000, -79.5000]
-        ]
-    },
-    aventura: {
-        name: "Ruta de Montaña",
-        desc: "45 km • 2.5 hrs • Dificultad: Media",
-        color: "#4CAF50",
-        path: [
-            [8.9824, -79.5199],
-            [9.0100, -79.5300],
-            [9.0300, -79.5500],
-            [9.0500, -79.5700]
-        ]
-    },
-    costera: {
-        name: "Ruta Costera",
-        desc: "30 km • 1.5 hrs • Dificultad: Fácil",
-        color: "#2196F3",
-        path: [
-            [8.9824, -79.5199],
-            [8.9700, -79.5100],
-            [8.9600, -79.5000],
-            [8.9500, -79.4900]
-        ]
-    }
-};
+function listenToOtherUsers(mapInstance) {
+    const currentUser = auth.currentUser;
+    if (!currentUser) return;
+    
+    const usersRef = db.collection('users').where('status', '==', 'online').orderBy('lastSeen', 'desc');
+    
+    window.usersUnsubscribe = usersRef.onSnapshot((snapshot) => {
+        if (window.otherUserMarkers) {
+            window.otherUserMarkers.forEach(marker => mapInstance.removeLayer(marker));
+        }
+        window.otherUserMarkers = [];
+        
+        snapshot.forEach((doc) => {
+            const userData = doc.data();
+            if (userData.uid === currentUser.uid) return;
+            
+            const { latitude, longitude } = userData.location;
+            if (!latitude) return;
 
-function initMap() {
-    if (typeof L === 'undefined') {
-        console.warn('⚠️ Leaflet no está cargado aún. Reintentando...');
-        setTimeout(() => initMap(), 500);
-        return;
-    }
-    
-    if (map) return;
-    
-    const defaultPos = [8.9824, -79.5199];
-    
-    map = L.map('leaflet-map', {
-        zoomControl: false,
-        attributionControl: false
-    }).setView(defaultPos, 13);
-    
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 19
-    }).addTo(map);
-    
-    L.control.zoom({
-        position: 'bottomright'
-    }).addTo(map);
-    
-    // ✅ Inicializar array de marcadores
-    window.otherUserMarkers = [];
-    
-    // ✅ Escuchar otros usuarios SOLO si existe la función
-    if (auth.currentUser && typeof listenToOtherUsers === 'function') {
-        console.log('👥 Escuchando otros usuarios...');
-        listenToOtherUsers(map);
-    }
-    
-    getUserLocation();
+            const userIcon = L.icon({
+                iconUrl: `avatar/${userData.avatarId || '1'}.png`,
+                iconSize: [45, 45], iconAnchor: [22, 22]
+            });
+            
+            const popupContent = `
+                <div class="user-interaction-popup">
+                    <h4>${userData.name || 'Motero'}</h4>
+                    <p>🏍️ ${userData.kmh || 0} km/h</p>
+                    <div class="interaction-buttons">
+                        <button class="btn-interact btn-greet" onclick="sendGreeting('${userData.uid}', '${userData.name}')">👋 Saludar</button>
+                        <button class="btn-interact btn-msg" onclick="sendMessage('${userData.uid}', '${userData.name}')">💬 Mensaje</button>
+                    </div>
+                </div>
+            `;
+
+            const marker = L.marker([latitude, longitude], { icon: userIcon }).addTo(mapInstance).bindPopup(popupContent);
+            window.otherUserMarkers.push(marker);
+        });
+    });
 }
+
+function sendGreeting(uid, name) { alert(`👋 Has saludado a ${name}`); }
+function sendMessage(uid, name) {
+    const msg = prompt(`💬 Enviar mensaje a ${name}:`);
+    if (msg) { console.log(`Mensaje enviado a ${uid}: ${msg}`); alert('Mensaje enviado'); }
+}
+
 function getUserLocation() {
     if (!navigator.geolocation) return;
-    
-    navigator.geolocation.getCurrentPosition(
+    if (watchId) navigator.geolocation.clearWatch(watchId);
+
+    watchId = navigator.geolocation.watchPosition(
         (position) => {
             const lat = position.coords.latitude;
             const lng = position.coords.longitude;
             
-            console.log('📍 Ubicación inicial:', lat, lng);
+            let speed = position.coords.speed;
+            if (speed === null || speed < 0) speed = 0;
+            const kmh = Math.round(speed * 3.6);
             
-            if (map) {
-                map.setView([lat, lng], 16);
-            }
-            
-            // ✅ 1. ACTUALIZAR FIRESTORE
-            if (auth.currentUser) {
-                updateUserLocation(lat, lng);
-            }
-            
-            // ✅ 2. PINTAR TU AVATAR EN EL MAPA
-            const user = getStoredUser();
-            const avatarUrl = (user && user.avatarId) ? `avatar/${user.avatarId}.png` : 'avatar/1.png';
-            
-            const customIcon = L.icon({
-                iconUrl: avatarUrl,
-                iconSize: [60, 60],
-                iconAnchor: [30, 30],
-                popupAnchor: [0, -25]
-            });
+            const speedEl = document.getElementById('speed-value'); 
+            if (speedEl) speedEl.textContent = kmh;  
 
-            if (userMarker) map.removeLayer(userMarker);
+            if (map) map.setView([lat, lng], 16);
             
-            userMarker = L.marker([lat, lng], { icon: customIcon }).addTo(map);
-            
-            // ✅ 3. INICIAR SEGUIMIENTO CADA 5 SEGUNDOS
-            if (locationUpdateInterval) clearInterval(locationUpdateInterval);
-            
-            locationUpdateInterval = setInterval(() => {
-                navigator.geolocation.getCurrentPosition(
-                    (pos) => {
-                        const newLat = pos.coords.latitude;
-                        const newLng = pos.coords.longitude;
-                        
-                        if (userMarker) userMarker.setLatLng([newLat, newLng]);
-                        if (auth.currentUser) updateUserLocation(newLat, newLng);
-                    },
-                    null,
-                    { enableHighAccuracy: true, maximumAge: 0 }
-                );
-            }, 5000);
-            
+            if (userMarker) {
+                userMarker.setLatLng([lat, lng]);
+            } else {
+                const user = getStoredUser();
+                const avatarUrl = (user && user.avatarId) ? `avatar/${user.avatarId}.png` : 'avatar/1.png';
+                const customIcon = L.icon({ iconUrl: avatarUrl, iconSize: [60, 60], iconAnchor: [30, 30] });
+                userMarker = L.marker([lat, lng], { icon: customIcon }).addTo(map);
+            }
+
+            if (auth.currentUser) updateUserLocation(lat, lng, kmh);
         },
-        (error) => {
-            console.warn('Error ubicación:', error);
-        },
-        { enableHighAccuracy: true }
+        (error) => console.warn('Error GPS:', error),
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
 }
 
@@ -1091,10 +1171,8 @@ function initMap() {
     
     window.otherUserMarkers = [];
     if (auth.currentUser) listenToOtherUsers(map);
-    
     getUserLocation();
 }
-
 
 const originalNavigateToMap = navigateTo;
 navigateTo = function(screenId) {
@@ -1102,24 +1180,17 @@ navigateTo = function(screenId) {
     if (screenId === 'map-screen') {
         setTimeout(() => {
             initMap();
-            if (map) {
-                setTimeout(() => map.invalidateSize(), 300);
-            }
+            if (map) setTimeout(() => map.invalidateSize(), 300);
         }, 100);
     }
 };
 
-// ==================== LOGOUT ====================
+// ==================== LOGOUT & LIMPIEZA ====================
 function logout() {
     setUserOffline();
-    
-    if (locationUpdateInterval) {
-        clearInterval(locationUpdateInterval);
-    }
-    
-    if (window.usersUnsubscribe) {
-        window.usersUnsubscribe();
-    }
+    if (locationUpdateInterval) clearInterval(locationUpdateInterval);
+    if (watchId) navigator.geolocation.clearWatch(watchId);
+    if (window.usersUnsubscribe) window.usersUnsubscribe();
     
     localStorage.removeItem('motoUser');
     if (auth) {
@@ -1130,84 +1201,157 @@ function logout() {
     }
 }
 
-// Limpiar al cerrar página/app
 window.addEventListener('beforeunload', () => {
     setUserOffline();
-    
-    if (locationUpdateInterval) {
-        clearInterval(locationUpdateInterval);
-    }
-    
-    if (window.usersUnsubscribe) {
-        window.usersUnsubscribe();
-    }
+    if (locationUpdateInterval) clearInterval(locationUpdateInterval);
+    if (watchId) navigator.geolocation.clearWatch(watchId);
+    if (window.usersUnsubscribe) window.usersUnsubscribe();
 });
-// ==================== BUSCADOR DE DIRECCIONES ====================
-function searchAddress() {
-    const query = document.getElementById('map-search-input').value.trim();
-    if (!query) return;
-    
+
+// ==================== BÚSQUEDA EN TIEMPO REAL ====================
+function handleSearchInput(e) {
+    const query = e.target.value.trim();
     const resultsDiv = document.getElementById('search-results');
-    resultsDiv.innerHTML = '<div class="search-result-item" style="color:var(--text-secondary);text-align:center;">Buscando...</div>';
-    resultsDiv.classList.add('active');
     
-    // Usamos Nominatim (OpenStreetMap) - Gratuito y sin API Key
-    fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&accept-language=es`)
-        .then(res => res.json())
-        .then(data => {
-            resultsDiv.innerHTML = '';
-            if (data.length === 0) {
-                resultsDiv.innerHTML = '<div class="search-result-item" style="color:var(--text-secondary);text-align:center;">No se encontraron resultados</div>';
-                return;
-            }
-            
-            data.forEach(place => {
-                const div = document.createElement('div');
-                div.className = 'search-result-item';
-                div.innerHTML = `<i class="fas fa-map-marker-alt"></i> ${place.display_name}`;
+    if (searchTimeout) clearTimeout(searchTimeout);
+    
+    if (query.length < 3) {
+        resultsDiv.classList.remove('active');
+        resultsDiv.innerHTML = '';
+        return;
+    }
+    
+    searchTimeout = setTimeout(() => {
+        fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&accept-language=es`)
+            .then(res => res.json())
+            .then(data => {
+                resultsDiv.innerHTML = '';
+                if (data.length === 0) {
+                    resultsDiv.innerHTML = '<div class="search-result-item">Sin resultados</div>';
+                    resultsDiv.classList.add('active');
+                    return;
+                }
                 
-                div.onclick = () => {
-                    const lat = parseFloat(place.lat);
-                    const lng = parseFloat(place.lon);
-                    
-                    // Mover mapa suavemente
-                    map.flyTo([lat, lng], 16, { duration: 1.5 });
-                    
-                    // Marcador temporal
-                    if (window.searchMarker) map.removeLayer(window.searchMarker);
-                    window.searchMarker = L.marker([lat, lng], {
-                        icon: L.divIcon({
-                            className: 'search-marker',
-                            html: '<div style="background:#FF6B35;width:12px;height:12px;border-radius:50%;border:3px solid white;box-shadow:0 4px 10px rgba(0,0,0,0.4);"></div>',
-                            iconSize: [18, 18],
-                            iconAnchor: [9, 9]
-                        })
-                    }).addTo(map).bindPopup(place.display_name).openPopup();
-                    
-                    resultsDiv.classList.remove('active');
-                    document.getElementById('map-search-input').value = '';
-                };
-                resultsDiv.appendChild(div);
-            });
-        })
-        .catch(err => {
-            console.error('Error buscando dirección:', err);
-            resultsDiv.innerHTML = '<div class="search-result-item" style="color:var(--danger);text-align:center;">Error de conexión</div>';
-        });
+                data.forEach(place => {
+                    const div = document.createElement('div');
+                    div.className = 'search-result-item';
+                    div.innerHTML = `<i class="fas fa-map-marker-alt"></i> ${place.display_name}`;
+                    div.onclick = () => {
+                        const lat = parseFloat(place.lat);
+                        const lng = parseFloat(place.lon);
+                        if (map) map.flyTo([lat, lng], 16);
+                        resultsDiv.classList.remove('active');
+                        document.getElementById('search-input').value = '';
+                    };
+                    resultsDiv.appendChild(div);
+                });
+                resultsDiv.classList.add('active');
+            })
+            .catch(err => console.error('Error buscando:', err));
+    }, 300);
 }
 
-// Cerrar resultados al hacer clic fuera
 document.addEventListener('click', (e) => {
-    const container = document.querySelector('.map-search-container');
+    const container = document.querySelector('.map-search-sheet');
     const results = document.getElementById('search-results');
     if (container && !container.contains(e.target) && results) {
         results.classList.remove('active');
     }
 });
 
-// Permitir buscar con Enter
-document.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' && document.activeElement.id === 'map-search-input') {
-        searchAddress();
+// ==================== FAVORITOS ====================
+function navigateToFav(type) {
+    const favs = JSON.parse(localStorage.getItem('motoFavs') || '{}');
+    if (favs[type] && map) {
+        map.flyTo([favs[type].lat, favs[type].lng], 16);
+    } else if (map) {
+        const query = prompt(`📍 Ingresa la dirección para ${type}:`);
+        if (query) {
+            // Reutiliza la lógica de búsqueda o guarda el centro actual
+            const center = map.getCenter();
+            favs[type] = { name: query, lat: center.lat, lng: center.lng };
+            localStorage.setItem('motoFavs', JSON.stringify(favs));
+            showSuccess('✅ Guardado', `${type} guardado en el centro del mapa.`);
+        }
     }
-});
+}
+
+function addNewFav() {
+    const name = prompt('Nombre del lugar favorito:');
+    if (!name || !map) return;
+    
+    const center = map.getCenter();
+    let favs = JSON.parse(localStorage.getItem('motoFavs') || '{}');
+    favs[name] = { name, lat: center.lat, lng: center.lng };
+    localStorage.setItem('motoFavs', JSON.stringify(favs));
+    showSuccess('✅ Guardado', `"${name}" guardado en favoritos.`);
+}
+
+// ==================== ALERTAS Y RECOMENDACIONES ====================
+function openReportModal() {
+    document.getElementById('report-modal').classList.add('active');
+}
+
+function closeReportModal() {
+    document.getElementById('report-modal').classList.remove('active');
+}
+
+function submitAlert(type, label) {
+    if (!map) return;
+    const center = map.getCenter();
+    
+    db.collection('alerts').add({
+        type: type,
+        label: label,
+        location: { lat: center.lat, lng: center.lng },
+        reportedBy: auth.currentUser ? auth.currentUser.uid : 'anonimo',
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+    }).then(() => {
+        showSuccess('✅ Reporte Enviado', 'Gracias por ayudar a la comunidad.');
+        closeReportModal();
+    }).catch(err => console.error(err));
+}
+
+function openRecommendModal() {
+    document.getElementById('recommend-modal').classList.add('active');
+}
+
+function closeRecommendModal() {
+    document.getElementById('recommend-modal').classList.remove('active');
+}
+
+function previewPhoto(event) {
+    const file = event.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const img = document.getElementById('rec-preview');
+            img.src = e.target.result;
+            img.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+    }
+}
+
+function submitRecommendation() {
+    const name = document.getElementById('rec-name').value;
+    const type = document.getElementById('rec-type').value;
+    const desc = document.getElementById('rec-desc').value;
+    
+    if (!name) { showAlert('⚠️ Nombre requerido', 'Ingresa el nombre del lugar'); return; }
+    
+    // Aquí iría la lógica de subida de foto a Firebase Storage
+    // Por ahora simulamos guardado en Firestore
+    db.collection('recommendations').add({
+        name, type, description: desc,
+        location: map ? map.getCenter() : { lat: 0, lng: 0 },
+        addedBy: auth.currentUser ? auth.currentUser.uid : 'anonimo',
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    }).then(() => {
+        showSuccess('✅ Recomendación Enviada', 'Tu sugerencia será revisada.');
+        closeRecommendModal();
+        document.getElementById('rec-name').value = '';
+        document.getElementById('rec-desc').value = '';
+        document.getElementById('rec-preview').style.display = 'none';
+    });
+}
