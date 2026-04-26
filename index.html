@@ -264,10 +264,19 @@
                 <div class="card" style="background:#333;border:1px solid red" onclick="logout()"><i class="fas fa-sign-out-alt" style="color:red"></i><div class="card-content"><span style="color:red">Cerrar sesión</span><strong>(Resetear App)</strong></div></div>
             </div>
             <nav class="bottom-nav">
-                <button class="nav-item active">Home</button>
-                <button class="nav-item" onclick="navigateTo('map-screen')">Mapa</button>
-                <button class="nav-item" onclick="navigateTo('profile-screen')">Perfil</button>
-            </nav>
+        <button class="nav-item active">
+            <i class="fas fa-home"></i>
+            <span>Home</span>
+        </button>
+        <button class="nav-item" onclick="navigateTo('map-screen')">
+            <i class="fas fa-map"></i>
+            <span>Mapa</span>
+        </button>
+        <button class="nav-item" onclick="navigateTo('profile-screen')">
+            <i class="fas fa-user"></i>
+            <span>Perfil</span>
+        </button>
+    </nav>
         </div>
 
         <!-- ==================== PANTALLA MAPA ==================== -->
