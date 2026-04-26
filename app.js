@@ -995,15 +995,15 @@ function initMap() {
     // ✅ Inicializar array de marcadores
     window.otherUserMarkers = [];
     
-    // ✅ Escuchar otros usuarios en tiempo real
-    if (auth.currentUser) {
+    // ✅ Escuchar otros usuarios SOLO si existe la función
+    if (auth.currentUser && typeof listenToOtherUsers === 'function') {
+        console.log('👥 Escuchando otros usuarios...');
         listenToOtherUsers(map);
     }
     
     getUserLocation();
     showRoute('urbana');
 }
-
 function getUserLocation() {
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
