@@ -259,49 +259,55 @@ function listenToOtherUsers(mapInstance) {
     const currentUser = auth.currentUser;
     if (!currentUser) return;
     
+    console.log('👥 Escuchando otros usuarios...');
+    
     const usersRef = db.collection('users')
         .where('status', '==', 'online')
         .orderBy('lastSeen', 'desc');
     
     window.usersUnsubscribe = usersRef.onSnapshot((snapshot) => {
+        // Limpiar marcadores viejos
         if (window.otherUserMarkers) {
             window.otherUserMarkers.forEach(marker => mapInstance.removeLayer(marker));
         }
         window.otherUserMarkers = [];
         
+        console.log(`📡 Usuarios encontrados: ${snapshot.size}`);
+
         snapshot.forEach((doc) => {
             const userData = doc.data();
             
-            if (userData.uid === currentUser.uid) return;
+            // NO mostrar al usuario actual (porque él tiene su propio marcador grande)
+            if (userData.uid === currentUser.uid) {
+                console.log('👤 Saltando usuario actual:', userData.name);
+                return; 
+            }
             
+            // Verificar actividad reciente (5 min)
             const lastSeen = userData.lastSeen?.toDate();
-            const now = new Date();
-            const minutesDiff = lastSeen ? (now - lastSeen) / 1000 / 60 : 999;
+            const minutesDiff = lastSeen ? (new Date() - lastSeen) / 60000 : 999;
             
             if (minutesDiff > 5) return;
             
+            if (!userData.location) return;
             const { latitude, longitude } = userData.location;
             
+            // Icono para OTROS usuarios (un poco más pequeño)
             const userIcon = L.icon({
                 iconUrl: `avatar/${userData.avatarId || '1'}.png`,
-                iconSize: [50, 50],
-                iconAnchor: [25, 25],
-                popupAnchor: [0, -25]
+                iconSize: [45, 45],
+                iconAnchor: [22, 22]
             });
             
             const marker = L.marker([latitude, longitude], { icon: userIcon })
                 .addTo(mapInstance)
-                .bindPopup(`
-                    <div style="text-align:center; padding:5px;">
-                        <strong>${userData.name || 'Motero'}</strong><br>
-                        <small style="color:#666;">En línea</small>
-                    </div>
-                `);
+                .bindPopup(`<strong>${userData.name || 'Motero'}</strong><br><small>En línea</small>`);
             
             window.otherUserMarkers.push(marker);
         });
         
-        console.log(`👥 ${window.otherUserMarkers.length} usuarios en el mapa`);
+        // Actualizar contador visual si tienes un elemento para eso, o solo en consola
+        console.log(`️ Renderizando ${window.otherUserMarkers.length} usuarios ajenos en el mapa.`);
     });
 }
 
