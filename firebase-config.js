@@ -230,7 +230,7 @@ async function getUserStats() {
 }
 
 // ✅ Guardar ubicación en tiempo real en Firestore
-async function updateUserLocation(lat, lng) {
+async function updateUserLocation(lat, lng, kmh = 0) {
     const user = auth.currentUser;
     if (!user) return;
     
@@ -244,11 +244,12 @@ async function updateUserLocation(lat, lng) {
                 longitude: lng,
                 timestamp: firebase.firestore.FieldValue.serverTimestamp()
             },
+            kmh: kmh, // ✅ Guardar velocidad
             lastSeen: firebase.firestore.FieldValue.serverTimestamp(),
             status: 'online'
         }, { merge: true });
         
-        console.log('📍 Ubicación actualizada en Firestore');
+        console.log('📍 Ubicación actualizada:', kmh, 'km/h');
     } catch (error) {
         console.error('Error actualizando ubicación:', error);
     }
