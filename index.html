@@ -8,13 +8,16 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
     <!-- Preconexión a recursos críticos -->
-<link rel="preconnect" href="https://unpkg.com">
-<link rel="preconnect" href="https://tile.openstreetmap.org">
-<link rel="preconnect" href="https://api.open-meteo.com">
-
-<!-- Meta para mejor rendimiento en móviles -->
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link rel="preconnect" href="https://unpkg.com">
+    <link rel="preconnect" href="https://tile.openstreetmap.org">
+    <link rel="preconnect" href="https://api.open-meteo.com">
+    
+    <!-- Meta para mejor rendimiento en móviles -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#16213E">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏍️</text></svg>">
 </head>
 <body>
     <div class="app-container">
@@ -28,13 +31,11 @@
                     <p>Tu compañero de ruta</p>
                 </div>
                 
-                <!-- Tabs: Login / Registro -->
                 <div class="auth-tabs">
                     <button class="tab-btn active" onclick="switchAuthTab('login')">Iniciar Sesión</button>
                     <button class="tab-btn" onclick="switchAuthTab('register')">Registrarse</button>
                 </div>
                 
-                <!-- Formulario Login -->
                 <div id="login-form" class="auth-form">
                     <div class="input-group">
                         <label>Email o Teléfono</label>
@@ -50,7 +51,6 @@
                     <p class="forgot-pass" onclick="showResetPassword()">¿Olvidaste tu contraseña?</p>
                 </div>
                 
-                <!-- Formulario Registro -->
                 <div id="register-form" class="auth-form" style="display:none;">
                     <div class="input-group">
                         <label>Nombre Completo</label>
@@ -70,19 +70,14 @@
                 </div>
                 
                 <div class="divider">o continúa con</div>
-                
                 <div class="social-login">
-                    <button class="social-btn" onclick="signInWithGoogle()">
-                        <i class="fab fa-google"></i>
-                    </button>
-                    <button class="social-btn" onclick="signInWithApple()">
-                        <i class="fab fa-apple"></i>
-                    </button>
+                    <button class="social-btn" onclick="signInWithGoogle()"><i class="fab fa-google"></i></button>
+                    <button class="social-btn" onclick="signInWithApple()"><i class="fab fa-apple"></i></button>
                 </div>
             </div>
         </div>
 
-        <!-- Contenedor reCAPTCHA invisible (para phone auth) -->
+        <!-- Contenedor reCAPTCHA -->
         <div id="recaptcha-container"></div>
 
         <!-- ==================== PANTALLA 0.5: ONBOARDING ==================== -->
@@ -91,7 +86,7 @@
                 <div class="progress-fill" id="progress-fill"></div>
             </div>
 
-            <!-- PASO 1: AVATAR -->
+                        <!-- PASO 1: AVATAR (COMPLETO) -->
             <div id="step-1" class="step-container active">
                 <h2>Elige tu Avatar</h2>
                 <p>Tu identidad en el mapa</p>
@@ -161,70 +156,70 @@
                 </div>
 
                 <div class="avatar-section">
-    <span class="section-label gold-label">🌟 GOLD - $9.99</span>
-    <div class="avatar-grid">
-        <div class="avatar-option gold locked" onclick="selectAvatar(this, 'gold', '11')">
-            <img src="avatar/11.png" alt="Avatar 11">
-            <div class="lock-overlay"><i class="fas fa-lock"></i></div>
-            <div class="price-badge gold-badge">$9.99</div>
-        </div>
-        <div class="avatar-option gold locked" onclick="selectAvatar(this, 'gold', '12')">
-            <img src="avatar/12.png" alt="Avatar 12">
-            <div class="lock-overlay"><i class="fas fa-lock"></i></div>
-            <div class="price-badge gold-badge">$9.99</div>
-        </div>
-        <div class="avatar-option gold locked" onclick="selectAvatar(this, 'gold', '13')">
-            <img src="avatar/13.png" alt="Avatar 13">
-            <div class="lock-overlay"><i class="fas fa-lock"></i></div>
-            <div class="price-badge gold-badge">$9.99</div>
-        </div>
-        <div class="avatar-option gold locked" onclick="selectAvatar(this, 'gold', '14')">
-            <img src="avatar/14.png" alt="Avatar 14">
-            <div class="lock-overlay"><i class="fas fa-lock"></i></div>
-            <div class="price-badge gold-badge">$9.99</div>
-        </div>
-        <div class="avatar-option gold locked" onclick="selectAvatar(this, 'gold', '15')">
-            <img src="avatar/15.png" alt="Avatar 15">
-            <div class="lock-overlay"><i class="fas fa-lock"></i></div>
-            <div class="price-badge gold-badge">$9.99</div>
-        </div>
-        <div class="avatar-option gold locked" onclick="selectAvatar(this, 'gold', '16')">
-            <img src="avatar/16.png" alt="Avatar 16">
-            <div class="lock-overlay"><i class="fas fa-lock"></i></div>
-            <div class="price-badge gold-badge">$9.99</div>
-        </div>
-        <div class="avatar-option gold locked" onclick="selectAvatar(this, 'gold', '17')">
-            <img src="avatar/17.png" alt="Avatar 17">
-            <div class="lock-overlay"><i class="fas fa-lock"></i></div>
-            <div class="price-badge gold-badge">$9.99</div>
-        </div>
-        <div class="avatar-option gold locked" onclick="selectAvatar(this, 'gold', '18')">
-            <img src="avatar/18.png" alt="Avatar 18">
-            <div class="lock-overlay"><i class="fas fa-lock"></i></div>
-            <div class="price-badge gold-badge">$9.99</div>
-        </div>
-        <div class="avatar-option gold locked" onclick="selectAvatar(this, 'gold', '19')">
-            <img src="avatar/19.png" alt="Avatar 19">
-            <div class="lock-overlay"><i class="fas fa-lock"></i></div>
-            <div class="price-badge gold-badge">$9.99</div>
-        </div>
-        <div class="avatar-option gold locked" onclick="selectAvatar(this, 'gold', '20')">
-            <img src="avatar/20.png" alt="Avatar 20">
-            <div class="lock-overlay"><i class="fas fa-lock"></i></div>
-            <div class="price-badge gold-badge">$9.99</div>
-        </div>
-        <div class="avatar-option gold locked" onclick="selectAvatar(this, 'gold', '21')">
-            <img src="avatar/21.png" alt="Avatar 21">
-            <div class="lock-overlay"><i class="fas fa-lock"></i></div>
-            <div class="price-badge gold-badge">$9.99</div>
-        </div>
-        <div class="avatar-option gold locked" onclick="selectAvatar(this, 'gold', '22')">
-            <img src="avatar/22.png" alt="Avatar 22">
-            <div class="lock-overlay"><i class="fas fa-lock"></i></div>
-            <div class="price-badge gold-badge">$9.99</div>
-        </div>
-    </div>
-</div>
+                    <span class="section-label gold-label">🌟 GOLD - $9.99</span>
+                    <div class="avatar-grid">
+                        <div class="avatar-option gold locked" onclick="selectAvatar(this, 'gold', '11')">
+                            <img src="avatar/11.png" alt="Avatar 11">
+                            <div class="lock-overlay"><i class="fas fa-lock"></i></div>
+                            <div class="price-badge gold-badge">$9.99</div>
+                        </div>
+                        <div class="avatar-option gold locked" onclick="selectAvatar(this, 'gold', '12')">
+                            <img src="avatar/12.png" alt="Avatar 12">
+                            <div class="lock-overlay"><i class="fas fa-lock"></i></div>
+                            <div class="price-badge gold-badge">$9.99</div>
+                        </div>
+                        <div class="avatar-option gold locked" onclick="selectAvatar(this, 'gold', '13')">
+                            <img src="avatar/13.png" alt="Avatar 13">
+                            <div class="lock-overlay"><i class="fas fa-lock"></i></div>
+                            <div class="price-badge gold-badge">$9.99</div>
+                        </div>
+                        <div class="avatar-option gold locked" onclick="selectAvatar(this, 'gold', '14')">
+                            <img src="avatar/14.png" alt="Avatar 14">
+                            <div class="lock-overlay"><i class="fas fa-lock"></i></div>
+                            <div class="price-badge gold-badge">$9.99</div>
+                        </div>
+                        <div class="avatar-option gold locked" onclick="selectAvatar(this, 'gold', '15')">
+                            <img src="avatar/15.png" alt="Avatar 15">
+                            <div class="lock-overlay"><i class="fas fa-lock"></i></div>
+                            <div class="price-badge gold-badge">$9.99</div>
+                        </div>
+                        <div class="avatar-option gold locked" onclick="selectAvatar(this, 'gold', '16')">
+                            <img src="avatar/16.png" alt="Avatar 16">
+                            <div class="lock-overlay"><i class="fas fa-lock"></i></div>
+                            <div class="price-badge gold-badge">$9.99</div>
+                        </div>
+                        <div class="avatar-option gold locked" onclick="selectAvatar(this, 'gold', '17')">
+                            <img src="avatar/17.png" alt="Avatar 17">
+                            <div class="lock-overlay"><i class="fas fa-lock"></i></div>
+                            <div class="price-badge gold-badge">$9.99</div>
+                        </div>
+                        <div class="avatar-option gold locked" onclick="selectAvatar(this, 'gold', '18')">
+                            <img src="avatar/18.png" alt="Avatar 18">
+                            <div class="lock-overlay"><i class="fas fa-lock"></i></div>
+                            <div class="price-badge gold-badge">$9.99</div>
+                        </div>
+                        <div class="avatar-option gold locked" onclick="selectAvatar(this, 'gold', '19')">
+                            <img src="avatar/19.png" alt="Avatar 19">
+                            <div class="lock-overlay"><i class="fas fa-lock"></i></div>
+                            <div class="price-badge gold-badge">$9.99</div>
+                        </div>
+                        <div class="avatar-option gold locked" onclick="selectAvatar(this, 'gold', '20')">
+                            <img src="avatar/20.png" alt="Avatar 20">
+                            <div class="lock-overlay"><i class="fas fa-lock"></i></div>
+                            <div class="price-badge gold-badge">$9.99</div>
+                        </div>
+                        <div class="avatar-option gold locked" onclick="selectAvatar(this, 'gold', '21')">
+                            <img src="avatar/21.png" alt="Avatar 21">
+                            <div class="lock-overlay"><i class="fas fa-lock"></i></div>
+                            <div class="price-badge gold-badge">$9.99</div>
+                        </div>
+                        <div class="avatar-option gold locked" onclick="selectAvatar(this, 'gold', '22')">
+                            <img src="avatar/22.png" alt="Avatar 22">
+                            <div class="lock-overlay"><i class="fas fa-lock"></i></div>
+                            <div class="price-badge gold-badge">$9.99</div>
+                        </div>
+                    </div>
+                </div>
 
                 <button class="btn-primary" onclick="handleNextStep()">Continuar</button>
             </div>
@@ -271,47 +266,207 @@
                 <div class="card" style="background:#333;border:1px solid red" onclick="logout()"><i class="fas fa-sign-out-alt" style="color:red"></i><div class="card-content"><span style="color:red">Cerrar sesión</span><strong>(Resetear App)</strong></div></div>
             </div>
             <nav class="bottom-nav">
-        <button class="nav-item active">
-            <i class="fas fa-home"></i>
-            <span>Home</span>
-        </button>
-        <button class="nav-item" onclick="navigateTo('map-screen')">
-            <i class="fas fa-map"></i>
-            <span>Mapa</span>
-        </button>
-        <button class="nav-item" onclick="navigateTo('profile-screen')">
-            <i class="fas fa-user"></i>
-            <span>Perfil</span>
-        </button>
-    </nav>
+                <button class="nav-item active"><i class="fas fa-home"></i><span>Home</span></button>
+                <button class="nav-item" onclick="navigateTo('map-screen')"><i class="fas fa-map"></i><span>Mapa</span></button>
+                <button class="nav-item" onclick="navigateTo('profile-screen')"><i class="fas fa-user"></i><span>Perfil</span></button>
+            </nav>
         </div>
 
         <!-- ==================== PANTALLA MAPA ==================== -->
-<div id="map-screen" class="screen">
-    <div class="map-header">
-        <button class="back-button" onclick="navigateTo('home-screen')">
-            <i class="fas fa-arrow-left"></i>
-        </button>
-        <h2 style="color:white; text-align:center; margin:0;">Mapa de Rutas</h2>
-        <button class="map-action-btn" onclick="centerOnUser()" title="Mi Ubicación">
-            <i class="fas fa-location-crosshairs"></i>
-        </button>
-    </div>
-    
-    <!-- Controles de Rutas -->
-    <div class="map-controls">
-        
-    </div>
-    
-    <!-- El Mapa -->
-    <div id="leaflet-map"></div>
-    
-    <nav class="bottom-nav">
-        <button class="nav-item" onclick="navigateTo('home-screen')">Home</button>
-        <button class="nav-item active">Mapa</button>
-        <button class="nav-item" onclick="navigateTo('profile-screen')">Perfil</button>
-    </nav>
-</div>
+        <div id="map-screen" class="screen">
+            <!-- Header Superior -->
+            <div class="map-header">
+                <button class="back-button" onclick="navigateTo('home-screen')"><i class="fas fa-arrow-left"></i></button>
+                <h2 style="color:white; text-align:center; margin:0;">Mapa</h2>
+                <button class="map-action-btn" onclick="centerOnUser()"><i class="fas fa-location-crosshairs"></i></button>
+            </div>
+            
+            <!-- ✅ BUSCADOR Y FAVORITOS (Limpio de "Waze") -->
+            <div class="map-search-sheet">
+                <div class="search-bar-container">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="search-input" placeholder="Buscar dirección, taller, refaccionaria..." oninput="handleSearchInput(event)">
+                    <button class="voice-btn" title="Búsqueda por voz"><i class="fas fa-microphone"></i></button>
+                </div>
+                <div id="search-results" class="search-results"></div>
+                
+                <!-- ✅ BOTONES MOTO-ORIENTED -->
+                <div class="quick-actions">
+                    <button class="action-pill" onclick="navigateToFav('garage')">
+                        <i class="fas fa-garage"></i> Garage
+                    </button>
+                    <button class="action-pill" onclick="navigateToFav('taller')">
+                        <i class="fas fa-wrench"></i> Taller
+                    </button>
+                    <button class="action-pill new-btn" onclick="addNewFav()">
+                        <i class="fas fa-bookmark"></i> Guardar
+                    </button>
+                </div>
+                
+                <!-- Recientes -->
+                <div id="recent-searches" class="recent-list"></div>
+            </div>
+
+            <!-- ✅ VELOCÍMETRO MINIMALISTA -->
+            <div class="speedometer-clean">
+                <span id="speed-value" class="speed-value">0</span>
+                <span class="speed-unit">km/h</span>
+            </div>
+
+            <!-- ✅ BOTÓN FLOTANTE DE ALERTAS -->
+            <button class="report-fab" onclick="openReportModal()" title="Reportar incidente">
+                <i class="fas fa-plus"></i>
+            </button>
+
+            <!-- El Mapa -->
+            <div id="leaflet-map"></div>
+
+            <!-- Navegación Inferior -->
+            <nav class="bottom-nav">
+                <button class="nav-item" onclick="navigateTo('home-screen')">Home</button>
+                <button class="nav-item active">Mapa</button>
+                <button class="nav-item" onclick="navigateTo('profile-screen')">Perfil</button>
+            </nav>
+        </div>
+
+        <!-- ==================== MODAL DE REPORTE DE ALERTAS ==================== -->
+        <div id="report-modal" class="custom-modal">
+            <div class="modal-overlay" onclick="closeReportModal()"></div>
+            <div class="modal-container">
+                <div class="modal-header">
+                    <h3>Reportar Incidente</h3>
+                </div>
+                <div class="modal-body">
+                    <p style="color:var(--text-secondary);margin-bottom:15px;text-align:center;">¿Qué ocurre en la vía?</p>
+                    <div class="alert-types-grid">
+                        <button class="alert-type-btn" onclick="submitAlert('bache', '🕳️ Bache')">
+                            <i class="fas fa-hole"></i><span>Bache</span>
+                        </button>
+                        <button class="alert-type-btn" onclick="submitAlert('accidente', '💥 Accidente')">
+                            <i class="fas fa-car-crash"></i><span>Accidente</span>
+                        </button>
+                        <button class="alert-type-btn" onclick="submitAlert('obra', '🚧 Obra')">
+                            <i class="fas fa-hard-hat"></i><span>Obra</span>
+                        </button>
+                        <button class="alert-type-btn" onclick="submitAlert('control', '👮 Control')">
+                            <i class="fas fa-shield-alt"></i><span>Control</span>
+                        </button>
+                        <button class="alert-type-btn" onclick="submitAlert('peligro', '⚠️ Peligro')">
+                            <i class="fas fa-exclamation-triangle"></i><span>Peligro</span>
+                        </button>
+                        <button class="alert-type-btn" onclick="submitAlert('otro', '📍 Otro')">
+                            <i class="fas fa-ellipsis-h"></i><span>Otro</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn-modal-secondary" onclick="closeReportModal()">Cancelar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== MODAL DE RECOMENDACIÓN DE LUGAR ==================== -->
+        <div id="recommend-modal" class="custom-modal">
+            <div class="modal-overlay" onclick="closeRecommendModal()"></div>
+            <div class="modal-container">
+                <div class="modal-header">
+                    <h3>Recomendar Lugar</h3>
+                </div>
+                <div class="modal-body">
+                    <input type="text" id="rec-name" placeholder="Nombre del lugar *" class="modal-input" required>
+                    <select id="rec-type" class="modal-input">
+                        <option value="taller">🔧 Taller mecánico</option>
+                        <option value="refaccionaria">🛒 Refaccionaria</option>
+                        <option value="motoclub">👥 Motoclub</option>
+                        <option value="gasolinera">⛽ Gasolinera</option>
+                        <option value="restaurante">☕ Restaurante</option>
+                        <option value="otro">📍 Otro lugar</option>
+                    </select>
+                    <textarea id="rec-desc" placeholder="Descripción (opcional)" class="modal-input" rows="3"></textarea>
+                    <div class="photo-upload">
+                        <label class="upload-label">
+                            <i class="fas fa-camera"></i> Agregar foto
+                            <input type="file" id="rec-photo" accept="image/*" hidden onchange="previewPhoto(event)">
+                        </label>
+                        <img id="rec-preview" class="photo-preview" style="display:none;">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn-modal-secondary" onclick="closeRecommendModal()">Cancelar</button>
+                    <button class="btn-modal-primary" onclick="submitRecommendation()">Enviar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== MODAL DE COMPRA (ACTUALIZADO) ==================== -->
+        <div id="purchase-modal" class="modal">
+            <div class="modal-content-purchase">
+                <!-- Botones de cierre -->
+                <button class="modal-nav-btn modal-back-btn" onclick="closePurchaseModal()">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+                <button class="modal-nav-btn modal-close-btn" onclick="closePurchaseModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+
+                <!-- Preview -->
+                <div class="purchase-avatar-preview">
+                    <img id="modal-avatar-img" src="" alt="Avatar">
+                    <span id="modal-avatar-tier" class="tier-badge-mini">GOLD</span>
+                </div>
+
+                <h3 id="modal-title" style="color:white; text-align:center; margin:10px 0;">Avatar Gold</h3>
+                
+                <!-- Precio -->
+                <div class="total-price-display">
+                    Total: <span id="modal-total-price" style="color:var(--primary); font-weight:bold; font-size:22px;">$9.99 USD</span>
+                </div>
+
+                <!-- Opciones de Pago -->
+                <div class="payment-methods">
+                    <p style="color:var(--text-secondary); font-size:12px; margin-bottom:10px; text-align:center;">Selecciona método de pago:</p>
+                    
+                    <button class="pay-btn" onclick="processPayment('paypal')">
+                        <i class="fab fa-paypal" style="color:#003087"></i> PayPal
+                    </button>
+                    
+                    <button class="pay-btn" onclick="processPayment('mercadopago')">
+                        <i class="fas fa-handshake" style="color:#009EE3"></i> Mercado Pago
+                    </button>
+                    
+                    <button class="pay-btn" onclick="processPayment('oxxo')">
+                        <i class="fas fa-store" style="color:#CC0000"></i> OXXO Pay
+                    </button>
+                </div>
+
+                <!-- Divider -->
+                <div class="divider" style="margin: 15px 0; border-color: rgba(255,255,255,0.1);">
+                    <span style="background:transparent; color:var(--text-secondary);">o</span>
+                </div>
+
+                <button class="redeem-code-btn" onclick="openRedeemModal()">
+                    <i class="fas fa-ticket-alt"></i> Canjear Código Promocional
+                </button>
+            </div>
+        </div>
+
+        <!-- ==================== MODAL CANJEAR CÓDIGO ==================== -->
+        <div id="redeem-modal" class="custom-modal">
+            <div class="modal-overlay" onclick="closeRedeemModal()"></div>
+            <div class="modal-container">
+                <div class="modal-header">
+                    <h3>Canjear Código</h3>
+                </div>
+                <div class="modal-body">
+                    <p>Ingresa tu código de acceso</p>
+                    <input type="text" id="redeem-input" class="modal-input" placeholder="Ej: MOTO2024" style="text-transform: uppercase; text-align:center; font-size: 18px; letter-spacing: 1px;">
+                </div>
+                <div class="modal-footer">
+                    <button class="btn-modal-secondary" onclick="closeRedeemModal()">Cancelar</button>
+                    <button class="btn-modal-primary" onclick="verifyCode()">Verificar</button>
+                </div>
+            </div>
+        </div>
 
         <!-- ==================== PANTALLA PERFIL ==================== -->
         <div id="profile-screen" class="screen">
@@ -324,48 +479,24 @@
                 <h2 id="profile-name">¡Hola!</h2>
                 <p id="profile-email" style="color:var(--text-secondary);font-size:14px;">email@ejemplo.com</p>
             </div>
-            
             <div class="profile-content">
                 <div class="profile-section">
                     <h3><i class="fas fa-motorcycle"></i> Mi Moto</h3>
                     <div class="profile-info-card">
-                        <div class="info-row">
-                            <span class="info-label">Tipo:</span>
-                            <span class="info-value" id="profile-bike-type">-</span>
-                        </div>
-                        <div class="info-row">
-                            <span class="info-label">Modelo:</span>
-                            <span class="info-value" id="profile-bike-model">-</span>
-                        </div>
-                        <div class="info-row">
-                            <span class="info-label">Kilómetros:</span>
-                            <span class="info-value" id="profile-km">0 km</span>
-                        </div>
+                        <div class="info-row"><span class="info-label">Tipo:</span><span class="info-value" id="profile-bike-type">-</span></div>
+                        <div class="info-row"><span class="info-label">Modelo:</span><span class="info-value" id="profile-bike-model">-</span></div>
+                        <div class="info-row"><span class="info-label">Kilómetros:</span><span class="info-value" id="profile-km">0 km</span></div>
                     </div>
                 </div>
-                
                 <div class="profile-section">
                     <h3><i class="fas fa-cog"></i> Configuración</h3>
                     <div class="profile-menu">
-                        <div class="menu-item" onclick="navigateTo('my-bikes-screen')">
-                            <i class="fas fa-motorcycle"></i>
-                            <span>Mis Motos</span>
-                            <i class="fas fa-chevron-right" style="margin-left:auto;color:var(--text-secondary)"></i>
-                        </div>
-                        <div class="menu-item" onclick="openAvatarSelector()">
-                            <i class="fas fa-user-circle"></i>
-                            <span>Cambiar Avatar</span>
-                            <i class="fas fa-chevron-right" style="margin-left:auto;color:var(--text-secondary)"></i>
-                        </div>
-                        <div class="menu-item" onclick="showNotification(' Próximamente', 'Más opciones pronto')">
-                            <i class="fas fa-bell"></i>
-                            <span>Notificaciones</span>
-                            <i class="fas fa-chevron-right" style="margin-left:auto;color:var(--text-secondary)"></i>
-                        </div>
+                        <div class="menu-item" onclick="navigateTo('my-bikes-screen')"><i class="fas fa-motorcycle"></i><span>Mis Motos</span><i class="fas fa-chevron-right" style="margin-left:auto;color:var(--text-secondary)"></i></div>
+                        <div class="menu-item" onclick="openAvatarSelector()"><i class="fas fa-user-circle"></i><span>Cambiar Avatar</span><i class="fas fa-chevron-right" style="margin-left:auto;color:var(--text-secondary)"></i></div>
+                        <div class="menu-item" onclick="showNotification(' Próximamente', 'Más opciones pronto')"><i class="fas fa-bell"></i><span>Notificaciones</span><i class="fas fa-chevron-right" style="margin-left:auto;color:var(--text-secondary)"></i></div>
                     </div>
                 </div>
             </div>
-            
             <nav class="bottom-nav">
                 <button class="nav-item" onclick="navigateTo('home-screen')">Home</button>
                 <button class="nav-item" onclick="navigateTo('map-screen')">Mapa</button>
@@ -376,29 +507,14 @@
         <!-- ==================== PANTALLA MIS MOTOS ==================== -->
         <div id="my-bikes-screen" class="screen">
             <div class="bikes-header">
-                <button class="back-button" onclick="navigateTo('profile-screen')">
-                    <i class="fas fa-arrow-left"></i>
-                </button>
+                <button class="back-button" onclick="navigateTo('profile-screen')"><i class="fas fa-arrow-left"></i></button>
                 <h2 style="color:white;text-align:center;flex:1;margin:0">Mis Motos</h2>
                 <div style="width:40px"></div>
             </div>
-            
             <div class="bikes-content">
-                <div id="bikes-list" class="bikes-list">
-                    <!-- Las motos se cargan dinámicamente -->
-                </div>
-                
-                <button class="btn-add-bike" onclick="showAddBikeModal()">
-                    <i class="fas fa-plus-circle"></i>
-                    <span>Agregar nueva moto</span>
-                </button>
+                <div id="bikes-list" class="bikes-list"></div>
+                <button class="btn-add-bike" onclick="showAddBikeModal()"><i class="fas fa-plus-circle"></i><span>Agregar nueva moto</span></button>
             </div>
-            
-            <nav class="bottom-nav">
-                <button class="nav-item" onclick="navigateTo('home-screen')">Home</button>
-                <button class="nav-item" onclick="navigateTo('map-screen')">Mapa</button>
-                <button class="nav-item active">Perfil</button>
-            </nav>
         </div>
 
         <!-- ==================== MODAL AGREGAR/EDITAR MOTO ==================== -->
@@ -407,72 +523,29 @@
             <div class="modal-container">
                 <div class="modal-header">
                     <h3 id="bike-modal-title">Agregar Moto</h3>
-                    <button class="close-modal" onclick="closeBikeModal()" style="position:absolute;top:15px;right:15px;background:none;border:none;color:var(--text-secondary);font-size:20px;cursor:pointer;">
-                        <i class="fas fa-times"></i>
-                    </button>
+                    <button class="close-modal" onclick="closeBikeModal()"><i class="fas fa-times"></i></button>
                 </div>
-                
                 <div class="modal-body">
                     <div class="bike-type-selector">
                         <p style="color:var(--text-secondary);font-size:12px;margin-bottom:10px;">Tipo de moto:</p>
                         <div class="bike-type-options" id="bike-type-options">
-    <div class="bike-type-option" onclick="selectBikeType('urbana')" data-type="urbana">
-        <i class="fas fa-city"></i>
-        <span>Urbana</span>
-    </div>
-    <div class="bike-type-option" onclick="selectBikeType('scooter')" data-type="scooter">
-        <i class="fas fa-motorcycle"></i>
-        <span>Scooter</span>
-    </div>
-    <div class="bike-type-option" onclick="selectBikeType('deportiva')" data-type="deportiva">
-        <i class="fas fa-tachometer-alt"></i>
-        <span>Deportiva</span>
-    </div>
-    <div class="bike-type-option" onclick="selectBikeType('aventura')" data-type="aventura">
-        <i class="fas fa-globe-americas"></i>
-        <span>Aventura</span>
-    </div>
-    <div class="bike-type-option" onclick="selectBikeType('trail')" data-type="trail">
-        <i class="fas fa-mountain"></i>
-        <span>Trail</span>
-    </div>
-    <div class="bike-type-option" onclick="selectBikeType('cross')" data-type="cross">
-        <i class="fas fa-flag-checkered"></i>
-        <span>Cross</span>
-    </div>
-    <div class="bike-type-option" onclick="selectBikeType('crucero')" data-type="crucero">
-        <i class="fas fa-road"></i>
-        <span>Crucero</span>
-    </div>
-    <div class="bike-type-option" onclick="selectBikeType('chopper')" data-type="chopper">
-        <i class="fas fa-motorcycle"></i>
-        <span>Chopper</span>
-    </div>
-    <div class="bike-type-option" onclick="selectBikeType('bobber')" data-type="bobber">
-        <i class="fas fa-motorcycle"></i>
-        <span>Bobber</span>
-    </div>
-    <div class="bike-type-option" onclick="selectBikeType('proyecto')" data-type="proyecto">
-        <i class="fas fa-tools"></i>
-        <span>Proyecto</span>
-    </div>
-</div>
+                            <div class="bike-type-option" onclick="selectBikeType('urbana')" data-type="urbana"><i class="fas fa-city"></i><span>Urbana</span></div>
+                            <div class="bike-type-option" onclick="selectBikeType('scooter')" data-type="scooter"><i class="fas fa-motorcycle"></i><span>Scooter</span></div>
+                            <div class="bike-type-option" onclick="selectBikeType('deportiva')" data-type="deportiva"><i class="fas fa-tachometer-alt"></i><span>Deportiva</span></div>
+                            <div class="bike-type-option" onclick="selectBikeType('aventura')" data-type="aventura"><i class="fas fa-globe-americas"></i><span>Aventura</span></div>
+                            <div class="bike-type-option" onclick="selectBikeType('trail')" data-type="trail"><i class="fas fa-mountain"></i><span>Trail</span></div>
+                            <div class="bike-type-option" onclick="selectBikeType('cross')" data-type="cross"><i class="fas fa-flag-checkered"></i><span>Cross</span></div>
+                            <div class="bike-type-option" onclick="selectBikeType('crucero')" data-type="crucero"><i class="fas fa-road"></i><span>Crucero</span></div>
+                            <div class="bike-type-option" onclick="selectBikeType('chopper')" data-type="chopper"><i class="fas fa-motorcycle"></i><span>Chopper</span></div>
+                            <div class="bike-type-option" onclick="selectBikeType('bobber')" data-type="bobber"><i class="fas fa-motorcycle"></i><span>Bobber</span></div>
+                            <div class="bike-type-option" onclick="selectBikeType('proyecto')" data-type="proyecto"><i class="fas fa-tools"></i><span>Proyecto</span></div>
+                        </div>
                     </div>
-                    
-                    <div class="input-group" style="margin-top:15px;">
-                        <label>Modelo</label>
-                        <input type="text" id="bike-modal-model" class="input-field" placeholder="Ej: CBR 600, Harley XL883">
-                    </div>
-                    
-                    <div class="input-group">
-                        <label>Kilómetros actuales</label>
-                        <input type="number" id="bike-modal-km" class="input-field" placeholder="0" min="0">
-                    </div>
-                    
+                    <div class="input-group" style="margin-top:15px;"><label>Modelo</label><input type="text" id="bike-modal-model" class="input-field" placeholder="Ej: CBR 600"></div>
+                    <div class="input-group"><label>Kilómetros actuales</label><input type="number" id="bike-modal-km" class="input-field" placeholder="0" min="0"></div>
                     <input type="hidden" id="bike-modal-edit-index" value="-1">
                     <input type="hidden" id="bike-modal-selected-type" value="">
                 </div>
-                
                 <div class="modal-footer">
                     <button class="btn-modal-secondary" onclick="closeBikeModal()">Cancelar</button>
                     <button class="btn-modal-primary" onclick="saveBike()">Guardar</button>
@@ -480,43 +553,7 @@
             </div>
         </div>
 
-<!-- ==================== MODAL DE COMPRA (CORREGIDO) ==================== -->
-<div id="purchase-modal" class="modal">
-    <div class="modal-content-purchase">
-        <!-- Botones de navegación externos para garantizar clic -->
-        <button class="modal-nav-btn modal-back-btn" onclick="closePurchaseModal()">
-            <i class="fas fa-arrow-left"></i>
-        </button>
-        <button class="modal-nav-btn modal-close-btn" onclick="closePurchaseModal()">
-            <i class="fas fa-times"></i>
-        </button>
-
-        <!-- Contenido -->
-        <div class="purchase-avatar-preview">
-            <img id="modal-avatar-img" src="" alt="Avatar">
-            <span id="modal-avatar-tier" class="tier-badge-mini">GOLD</span>
-        </div>
-
-        <h3 id="modal-title" style="color:white; text-align:center; margin:10px 0;">Avatar 22</h3>
-
-        <div class="purchase-options-compact">
-            <div class="purchase-card" onclick="completePurchase('single')">
-                <div class="price-tag">$9.99</div>
-                <div class="price-desc">Pago Único</div>
-                <button class="btn-buy-small"><i class="fas fa-shopping-cart"></i></button>
-            </div>
-            
-            <div class="purchase-card best-value" onclick="completePurchase('pack')">
-                <div class="best-badge">Mejor Valor</div>
-                <div class="price-tag" id="modal-pack-price">$89.99</div>
-                <div class="price-desc">Pack Completo</div>
-                <button class="btn-buy-small"><i class="fas fa-crown"></i></button>
-            </div>
-        </div>
-    </div>
-</div>
-
-        <!-- ==================== MODALES PERSONALIZADOS ==================== -->
+        <!-- ==================== MODALES GENERALES ==================== -->
         <div id="modal-info" class="custom-modal">
             <div class="modal-overlay" onclick="closeModal('info')"></div>
             <div class="modal-container">
@@ -606,21 +643,17 @@
         </div>
     </div>
 
-    <!-- ==================== BANNER DE ANUNCIO ==================== -->
-<div id="app-banner" class="app-banner">
-    <div class="banner-content">
-        <div class="banner-icon">
-            <i class="fas fa-bolt"></i>
+    <!-- ==================== BANNER DE ANUNCIOS ==================== -->
+    <div id="app-banner" class="app-banner">
+        <div class="banner-content">
+            <div class="banner-icon"><i class="fas fa-bolt"></i></div>
+            <div class="banner-text">
+                <strong>¡MotoRider Gold!</strong>
+                <span>Desbloquea avatares y rutas exclusivas.</span>
+            </div>
+            <button class="banner-close" onclick="closeBanner()"><i class="fas fa-times"></i></button>
         </div>
-        <div class="banner-text">
-            <strong>¡MotoRider Gold!</strong>
-            <span>Desbloquea avatares y rutas exclusivas.</span>
-        </div>
-        <button class="banner-close" onclick="closeBanner()">
-            <i class="fas fa-times"></i>
-        </button>
     </div>
-</div>
 
     <!-- Firebase SDK + Configuración -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
