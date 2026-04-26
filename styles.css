@@ -413,3 +413,9 @@ img { max-width: 100%; display: block; }
         display: none; /* Ocultar texto en pantallas muy pequeñas */
     }
 }
+
+/* Estilo para marcadores de alertas */
+.alert-marker {
+    background: transparent !important;
+    border: none !important;
+}
