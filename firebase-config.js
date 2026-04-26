@@ -88,27 +88,43 @@ auth.onAuthStateChanged(async (user) => {
 
 async function getUserLocation() {
     try {
-        const response = await fetch('https://ipapi.co/json/');
+        // Timeout de 5 segundos para no quedarse trabado
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
+        
+        const response = await fetch('https://ipapi.co/json/', {
+            signal: controller.signal
+        });
+        
+        clearTimeout(timeoutId);
+        
+        if (!response.ok) {
+            throw new Error('API no responde');
+        }
+        
         const data = await response.json();
         
+        // ✅ VALIDAR QUE EXISTAN LOS VALORES (nunca undefined)
         return {
-            city: data.city || 'Desconocida',
-            state: data.region || 'Desconocido',
-            country: data.country_name || 'Desconocido',
+            city: data.city || 'Ciudad Desconocida',
+            state: data.region || 'Estado Desconocido',
+            country: data.country_name || 'País Desconocido',
             countryCode: data.country_code || 'XX',
-            latitude: data.latitude || 0,
-            longitude: data.longitude || 0,
+            latitude: typeof data.latitude === 'number' ? data.latitude : 0,
+            longitude: typeof data.longitude === 'number' ? data.longitude : 0,
             timezone: data.timezone || 'UTC'
         };
     } catch (error) {
-        console.error('Error obteniendo ubicación:', error);
+        console.error('❌ Error obteniendo ubicación (usando fallback):', error);
+        
+        // ✅ VALORES SEGUROS POR DEFECTO (NUNCA undefined)
         return {
-            city: 'Desconocida',
-            state: 'Desconocido',
-            country: 'Desconocido',
+            city: 'Ciudad Desconocida',
+            state: 'Estado Desconocido',
+            country: 'País Desconocido',
             countryCode: 'XX',
-            latitude: 0,
-            longitude: 0,
+            latitude: 8.9824,  // Panamá por defecto
+            longitude: -79.5199,
             timezone: 'UTC'
         };
     }
