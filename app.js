@@ -116,11 +116,10 @@ function handleLogin() {
         .then(() => {
             showSuccess('¡Bienvenido!', 'Has iniciado sesión correctamente.');
             showBannerOnLogin();
-            
-            // ✅ NAVEGAR AL HOME DESPUÉS DEL LOGIN
+            // ✅ AVANZAR AL HOME AUTOMÁTICAMENTE
             setTimeout(() => {
                 navigateTo('home-screen');
-            }, 1500); // Esperar 1.5 segundos para que se vea el mensaje
+            }, 1500);
         })
         .catch((error) => {
             showAlert('Error de acceso', error.message || 'No se pudo iniciar sesión.');
@@ -1010,12 +1009,8 @@ function initMap() {
     showRoute('urbana');
 }
 function getUserLocation() {
-    if (!navigator.geolocation) {
-        console.warn('❌ Geolocalización no soportada');
-        return;
-    }
+    if (!navigator.geolocation) return;
     
-    // ✅ OBTENER UBICACIÓN INICIAL
     navigator.geolocation.getCurrentPosition(
         (position) => {
             const lat = position.coords.latitude;
@@ -1025,20 +1020,30 @@ function getUserLocation() {
             
             if (map) {
                 map.setView([lat, lng], 16);
-            } else {
-                console.warn('⚠️ El mapa aún no está inicializado');
-                return;
             }
             
-            // ✅ ACTUALIZAR EN FIRESTORE INMEDIATAMENTE
+            // ✅ 1. ACTUALIZAR FIRESTORE
             if (auth.currentUser) {
                 updateUserLocation(lat, lng);
             }
             
-            // ✅ ACTUALIZAR CADA 5 SEGUNDOS (más frecuente)
-            if (locationUpdateInterval) {
-                clearInterval(locationUpdateInterval);
-            }
+            // ✅ 2. PINTAR TU AVATAR EN EL MAPA
+            const user = getStoredUser();
+            const avatarUrl = (user && user.avatarId) ? `avatar/${user.avatarId}.png` : 'avatar/1.png';
+            
+            const customIcon = L.icon({
+                iconUrl: avatarUrl,
+                iconSize: [60, 60],
+                iconAnchor: [30, 30],
+                popupAnchor: [0, -25]
+            });
+
+            if (userMarker) map.removeLayer(userMarker);
+            
+            userMarker = L.marker([lat, lng], { icon: customIcon }).addTo(map);
+            
+            // ✅ 3. INICIAR SEGUIMIENTO CADA 5 SEGUNDOS
+            if (locationUpdateInterval) clearInterval(locationUpdateInterval);
             
             locationUpdateInterval = setInterval(() => {
                 navigator.geolocation.getCurrentPosition(
@@ -1046,46 +1051,19 @@ function getUserLocation() {
                         const newLat = pos.coords.latitude;
                         const newLng = pos.coords.longitude;
                         
-                        console.log('🔄 Actualizando ubicación:', newLat, newLng);
-                        
-                        // Actualizar mapa
-                        if (map) {
-                            // Opcional: seguir al usuario si está cerca del centro
-                            // map.setView([newLat, newLng], 16);
-                        }
-                        
-                        // Actualizar Firestore
-                        if (auth.currentUser) {
-                            updateUserLocation(newLat, newLng);
-                        }
-                        
-                        // Actualizar marcador visualmente
-                        if (userMarker) {
-                            userMarker.setLatLng([newLat, newLng]);
-                        }
+                        if (userMarker) userMarker.setLatLng([newLat, newLng]);
+                        if (auth.currentUser) updateUserLocation(newLat, newLng);
                     },
-                    (error) => {
-                        console.warn('⚠️ Error en actualización periódica:', error);
-                    },
-                    {
-                        enableHighAccuracy: true,  // ✅ Usar GPS de alta precisión
-                        timeout: 10000,             // Timeout de 10 segundos
-                        maximumAge: 0               // No usar caché
-                    }
+                    null,
+                    { enableHighAccuracy: true, maximumAge: 0 }
                 );
-            }, 5000); // Cada 5 segundos
+            }, 5000);
+            
         },
         (error) => {
-            console.warn('❌ Error obteniendo ubicación inicial:', error);
-            if (map) {
-                map.setView([8.9824, -79.5199], 13);
-            }
+            console.warn('Error ubicación:', error);
         },
-        {
-            enableHighAccuracy: true,
-            timeout: 10000,
-            maximumAge: 0
-        }
+        { enableHighAccuracy: true }
     );
 }
 
