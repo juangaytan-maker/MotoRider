@@ -419,58 +419,39 @@ img { max-width: 100%; display: block; }
     background: transparent !important;
     border: none !important;
 }
-/* ✅ Mostrar botones en móvil */
-@media (max-width: 480px) {
+/* ✅ Forzar visibilidad de botones en móvil */
+@media (max-width: 768px) {
     .map-search-sheet {
-        display: flex !important;
-        flex-direction: column !important;
-        padding: 15px !important;
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
     }
     
     .quick-actions {
         display: flex !important;
-        flex-direction: row !important;
-        gap: 8px !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        flex-wrap: nowrap !important;
         overflow-x: auto !important;
+        gap: 10px !important;
         padding: 10px 0 !important;
-        margin-top: 10px !important;
+        margin: 10px 0 !important;
     }
     
     .action-pill {
-        display: flex !important;
+        display: inline-flex !important;
+        visibility: visible !important;
+        opacity: 1 !important;
         align-items: center !important;
-        gap: 6px !important;
-        padding: 8px 14px !important;
-        background: #f5f5f5 !important;
-        border: 1px solid #e0e0e0 !important;
-        border-radius: 20px !important;
-        white-space: nowrap !important;
+        justify-content: center !important;
+        padding: 10px 16px !important;
+        min-width: fit-content !important;
         flex-shrink: 0 !important;
-        font-size: 13px !important;
-        cursor: pointer !important;
     }
     
-    .action-pill i {
-        font-size: 14px !important;
-        color: #FF6B35 !important;
-    }
-    
-    .action-pill.new-btn {
-        background: #e3f2fd !important;
-        border-color: #bbdefb !important;
-    }
-    
-    .action-pill.new-btn i {
-        color: #1976d2 !important;
-    }
-    
-    /* Asegurar que el scroll funcione */
-    .quick-actions::-webkit-scrollbar {
-        height: 4px;
-    }
-    
-    .quick-actions::-webkit-scrollbar-thumb {
-        background: #ccc;
-        border-radius: 4px;
+    /* Asegurar que el contenedor del buscador sea visible */
+    .search-bar-container {
+        display: flex !important;
+        visibility: visible !important;
     }
 }
