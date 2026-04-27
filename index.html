@@ -265,16 +265,11 @@
                 <div class="card" onclick="addKilometers()"><i class="fas fa-plus-circle" style="color:#4CAF50"></i><div class="card-content"><span>Agregar kilómetros</span><strong>Actualizar odómetro</strong></div></div>
                 <div class="card" style="background:#333;border:1px solid red" onclick="logout()"><i class="fas fa-sign-out-alt" style="color:red"></i><div class="card-content"><span style="color:red">Cerrar sesión</span><strong>(Resetear App)</strong></div></div>
             </div>
-            <!-- Barra de navegación INTERNA del Home -->
-            <nav class="bottom-nav">
-                <button class="nav-item active"><i class="fas fa-home"></i><span>Home</span></button>
-                <button class="nav-item" onclick="navigateTo('map-screen')"><i class="fas fa-map"></i><span>Mapa</span></button>
-                <button class="nav-item" onclick="navigateTo('profile-screen')"><i class="fas fa-user"></i><span>Perfil</span></button>
-            </nav>
         </div>
 
-        <!-- ==================== PANTALLA MAPA (CORREGIDA) ==================== -->
+        <!-- ==================== PANTALLA MAPA (ESTRUCTURA CORREGIDA) ==================== -->
         <div id="map-screen" class="screen">
+            
             <!-- 1. Header -->
             <div class="map-header">
                 <button class="back-button" onclick="navigateTo('home-screen')"><i class="fas fa-arrow-left"></i></button>
@@ -322,13 +317,6 @@
                 <!-- Recientes -->
                 <div id="recent-searches" class="recent-list"></div>
             </div>
-
-            <!-- 5. Barra de navegación INTERNA del Mapa -->
-            <nav class="bottom-nav">
-                <button class="nav-item" onclick="navigateTo('home-screen')">Home</button>
-                <button class="nav-item active">Mapa</button>
-                <button class="nav-item" onclick="navigateTo('profile-screen')">Perfil</button>
-            </nav>
         </div>
 
         <!-- ==================== MODAL DE REPORTE DE ALERTAS ==================== -->
@@ -499,12 +487,6 @@
                     </div>
                 </div>
             </div>
-            <!-- Barra de navegación INTERNA del Perfil -->
-            <nav class="bottom-nav">
-                <button class="nav-item" onclick="navigateTo('home-screen')">Home</button>
-                <button class="nav-item" onclick="navigateTo('map-screen')">Mapa</button>
-                <button class="nav-item active">Perfil</button>
-            </nav>
         </div>
 
         <!-- ==================== PANTALLA MIS MOTOS ==================== -->
@@ -644,7 +626,24 @@
                 <div class="modal-footer"><button class="btn-modal-primary" onclick="closeModal('rules')">Entendido, ¡a rodar! <i class="fas fa-motorcycle"></i></button></div>
             </div>
         </div>
-    </div>
+
+        <!-- ==================== BOTTOM NAVIGATION GLOBAL (ÚNICA) ==================== -->
+        <nav class="bottom-nav">
+            <button class="nav-item" onclick="navigateTo('home-screen')">
+                <i class="fas fa-home"></i>
+                <span>Home</span>
+            </button>
+            <button class="nav-item" onclick="navigateTo('map-screen')">
+                <i class="fas fa-map"></i>
+                <span>Mapa</span>
+            </button>
+            <button class="nav-item" onclick="navigateTo('profile-screen')">
+                <i class="fas fa-user"></i>
+                <span>Perfil</span>
+            </button>
+        </nav>
+
+    </div> <!-- Cierra app-container -->
 
     <!-- ==================== BANNER DE ANUNCIOS ==================== -->
     <div id="app-banner" class="app-banner">
