@@ -468,3 +468,83 @@ img { max-width: 100%; display: block; }
     bottom: 260px !important;
     right: 20px !important;
 }
+/* 🚨 CORRECCIÓN DE EMERGENCIA - FORZAR LAYOUT */
+
+/* Resetear todas las pantallas */
+.screen {
+    display: none !important;
+    position: relative !important;
+    height: 100% !important;
+    overflow: hidden !important;
+}
+
+.screen.active {
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+/* Mapa debe ocupar todo */
+#map-screen {
+    position: relative !important;
+    height: 100vh !important;
+    width: 100% !important;
+}
+
+#map-screen #leaflet-map {
+    position: absolute !important;
+    top: 60px !important; /* Debajo del header */
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 250px !important; /* Arriba del buscador */
+    height: auto !important;
+    min-height: 300px !important;
+    z-index: 1 !important;
+    background: #e0e0e0 !important; /* Fondo visible */
+}
+
+/* Header del mapa */
+#map-screen .map-header {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    z-index: 1000 !important;
+    flex-shrink: 0 !important;
+}
+
+/* Buscador abajo */
+#map-screen .map-search-sheet {
+    position: absolute !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    z-index: 100 !important;
+    flex-shrink: 0 !important;
+}
+
+/* Ocultar todo lo que no sea map-screen cuando no está activo */
+.screen:not(.active) {
+    display: none !important;
+}
+
+/* Velocímetro y botón + solo en mapa */
+.speedometer-clean,
+.report-fab {
+    display: none !important;
+}
+
+#map-screen.active .speedometer-clean {
+    display: flex !important;
+    position: absolute !important;
+    bottom: 280px !important;
+    left: 20px !important;
+    z-index: 1001 !important;
+}
+
+#map-screen.active .report-fab {
+    display: flex !important;
+    position: absolute !important;
+    bottom: 260px !important;
+    right: 20px !important;
+    z-index: 1001 !important;
+}
