@@ -349,3 +349,54 @@ img { max-width: 100%; display: block; }
 .photo-preview { width: 100%; max-height: 150px; object-fit: cover; border-radius: 8px; margin-top: 10px; }
 
 /* ==================== MEDIA QUERIES MÓVIL (LIMPIO) ==================== */
+/* ✅ CORRECCIÓN: Elementos del mapa SOLO visibles en map-screen */
+.speedometer-clean,
+.report-fab {
+    display: none !important;
+}
+
+/* Solo mostrar cuando map-screen está activo */
+#map-screen.active .speedometer-clean,
+#map-screen.active .report-fab {
+    display: flex !important;
+}
+
+/* ✅ CORRECCIÓN: Mapa debe tener altura */
+#leaflet-map {
+    height: 100% !important;
+    width: 100% !important;
+    min-height: 400px !important;
+}
+
+/* ✅ CORRECCIÓN: Ajustar buscador para que no tape botones */
+#map-screen.active {
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+.map-search-sheet {
+    position: relative !important;
+    z-index: 100 !important;
+    margin-top: auto !important;
+    box-shadow: 0 -5px 20px rgba(0,0,0,0.3) !important;
+}
+
+/* Asegurar que el contenedor del mapa ocupe espacio */
+#map-screen {
+    position: relative !important;
+}
+
+/* El mapa debe crecer */
+#leaflet-map {
+    flex: 1 !important;
+    min-height: 300px !important;
+}
+
+/* ✅ CORRECCIÓN: Botones visibles sobre el buscador */
+.quick-actions {
+    position: relative !important;
+    z-index: 101 !important;
+    background: white !important;
+    padding: 10px !important;
+    border-radius: 15px 15px 0 0 !important;
+}
