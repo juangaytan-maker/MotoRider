@@ -86,7 +86,7 @@
                 <div class="progress-fill" id="progress-fill"></div>
             </div>
 
-                        <!-- PASO 1: AVATAR (COMPLETO) -->
+            <!-- PASO 1: AVATAR (COMPLETO) -->
             <div id="step-1" class="step-container active">
                 <h2>Elige tu Avatar</h2>
                 <p>Tu identidad en el mapa</p>
@@ -272,8 +272,9 @@
             </nav>
         </div>
 
-        <!-- ==================== PANTALLA MAPA ==================== -->
+        <!-- ==================== PANTALLA MAPA (ESTRUCTURA CORREGIDA) ==================== -->
         <div id="map-screen" class="screen">
+            
             <!-- Header Superior -->
             <div class="map-header">
                 <button class="back-button" onclick="navigateTo('home-screen')"><i class="fas fa-arrow-left"></i></button>
@@ -281,15 +282,29 @@
                 <button class="map-action-btn" onclick="centerOnUser()"><i class="fas fa-location-crosshairs"></i></button>
             </div>
             
-            <!-- ✅ BUSCADOR Y FAVORITOS (Limpio de "Waze") -->
-            <div class="map-search-sheet"></div>
-                <div class="search-bar-container">
-                <i class="fas fa-search"></i>
-                <input type="text" id="search-input" placeholder="Buscar dirección, taller, refaccionaria..." oninput="handleSearchInput(event)" onkeypress="if(event.key==='Enter')performSearch()">
-                <button class="voice-btn" onclick="performSearch()" title="Buscar">
-                    <i class="fas fa-search"></i>
-                </button>
+            <!-- ✅ EL MAPA (ocupa el espacio central) -->
+            <div id="leaflet-map"></div>
+
+            <!-- ✅ VELOCÍMETRO MINIMALISTA (flotante sobre el mapa) -->
+            <div class="speedometer-clean">
+                <span id="speed-value" class="speed-value">0</span>
+                <span class="speed-unit">km/h</span>
             </div>
+
+            <!-- ✅ BOTÓN FLOTANTE DE ALERTAS -->
+            <button class="report-fab" onclick="openReportModal()" title="Reportar incidente">
+                <i class="fas fa-plus"></i>
+            </button>
+            
+            <!-- ✅ BUSCADOR Y FAVORITOS (al fondo, sobre el mapa) -->
+            <div class="map-search-sheet">
+                <div class="search-bar-container">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="search-input" placeholder="Buscar dirección, taller, refaccionaria..." oninput="handleSearchInput(event)" onkeypress="if(event.key==='Enter')performSearch()">
+                    <button class="voice-btn" onclick="performSearch()" title="Buscar">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
                 <div id="search-results" class="search-results"></div>
                 
                 <!-- ✅ BOTONES MOTO-ORIENTED -->
@@ -308,20 +323,6 @@
                 <!-- Recientes -->
                 <div id="recent-searches" class="recent-list"></div>
             </div>
-
-            <!-- ✅ VELOCÍMETRO MINIMALISTA -->
-            <div class="speedometer-clean">
-                <span id="speed-value" class="speed-value">0</span>
-                <span class="speed-unit">km/h</span>
-            </div>
-
-            <!-- ✅ BOTÓN FLOTANTE DE ALERTAS -->
-            <button class="report-fab" onclick="openReportModal()" title="Reportar incidente">
-                <i class="fas fa-plus"></i>
-            </button>
-
-            <!-- El Mapa -->
-            <div id="leaflet-map"></div>
 
             <!-- Navegación Inferior -->
             <nav class="bottom-nav">
