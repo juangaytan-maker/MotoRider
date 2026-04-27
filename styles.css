@@ -424,3 +424,32 @@ img { max-width: 100%; display: block; }
     .action-pill span { display: none; }
     .action-pill { padding: 10px !important; }
 }
+/* ✅ OCULTAR bottom-nav cuando estamos en el mapa */
+#map-screen.active ~ .bottom-nav,
+#map-screen .bottom-nav {
+    display: none !important;
+}
+
+/* ✅ Asegurar que cada pantalla solo muestre SU bottom-nav */
+.screen:not(.active) .bottom-nav {
+    display: none !important;
+}
+
+/* ✅ Bottom-nav SOLO visible en home y perfil */
+#home-screen.active ~ .bottom-nav,
+#profile-screen.active ~ .bottom-nav,
+#home-screen .bottom-nav,
+#profile-screen .bottom-nav {
+    display: flex !important;
+}
+
+/* ✅ Ajustar padding del contenido cuando hay bottom-nav */
+#home-screen .cards-container,
+#profile-screen .profile-content {
+    padding-bottom: 80px !important;
+}
+
+/* ✅ En el mapa, el buscador ya tiene su propio espacio */
+#map-screen {
+    padding-bottom: 0 !important;
+}
