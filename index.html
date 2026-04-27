@@ -282,12 +282,14 @@
             </div>
             
             <!-- ✅ BUSCADOR Y FAVORITOS (Limpio de "Waze") -->
-            <div class="map-search-sheet">
+            <div class="map-search-sheet"></div>
                 <div class="search-bar-container">
+                <i class="fas fa-search"></i>
+                <input type="text" id="search-input" placeholder="Buscar dirección, taller, refaccionaria..." oninput="handleSearchInput(event)" onkeypress="if(event.key==='Enter')performSearch()">
+                <button class="voice-btn" onclick="performSearch()" title="Buscar">
                     <i class="fas fa-search"></i>
-                    <input type="text" id="search-input" placeholder="Buscar dirección, taller, refaccionaria..." oninput="handleSearchInput(event)">
-                    <button class="voice-btn" title="Búsqueda por voz"><i class="fas fa-microphone"></i></button>
-                </div>
+                </button>
+            </div>
                 <div id="search-results" class="search-results"></div>
                 
                 <!-- ✅ BOTONES MOTO-ORIENTED -->
