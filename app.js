@@ -1325,12 +1325,13 @@ function handleSearchInput(e) {
     }
     
     searchTimeout = setTimeout(() => {
-        fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&accept-language=es`)
+        // ✅ AGREGAR countrycodes=mx para filtrar solo México
+        fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=mx&limit=5&accept-language=es`)
             .then(res => res.json())
             .then(data => {
                 resultsDiv.innerHTML = '';
                 if (data.length === 0) {
-                    resultsDiv.innerHTML = '<div class="search-result-item">Sin resultados</div>';
+                    resultsDiv.innerHTML = '<div class="search-result-item">Sin resultados en México</div>';
                     resultsDiv.classList.add('active');
                     return;
                 }
@@ -1338,11 +1339,21 @@ function handleSearchInput(e) {
                 data.forEach(place => {
                     const div = document.createElement('div');
                     div.className = 'search-result-item';
-                    div.innerHTML = `<i class="fas fa-map-marker-alt"></i> ${place.display_name}`;
+                    // Mostrar solo la parte relevante de la dirección
+                    const displayName = place.display_name.split(',')[0] + ', ' + place.display_name.split(',')[1] || place.display_name;
+                    div.innerHTML = `<i class="fas fa-map-marker-alt"></i> ${displayName}`;
                     div.onclick = () => {
                         const lat = parseFloat(place.lat);
                         const lng = parseFloat(place.lon);
-                        if (map) map.flyTo([lat, lng], 16);
+                        if (map) {
+                            map.flyTo([lat, lng], 16, { duration: 1.5 });
+                            // Agregar marcador temporal
+                            if (window.searchMarker) map.removeLayer(window.searchMarker);
+                            window.searchMarker = L.marker([lat, lng])
+                                .addTo(map)
+                                .bindPopup(displayName)
+                                .openPopup();
+                        }
                         resultsDiv.classList.remove('active');
                         document.getElementById('search-input').value = '';
                     };
@@ -1350,8 +1361,66 @@ function handleSearchInput(e) {
                 });
                 resultsDiv.classList.add('active');
             })
-            .catch(err => console.error('Error buscando:', err));
+            .catch(err => {
+                console.error('Error buscando:', err);
+                resultsDiv.innerHTML = '<div class="search-result-item">Error de conexión</div>';
+                resultsDiv.classList.add('active');
+            });
     }, 300);
+}
+
+// Función para el botón de búsqueda manual
+function performSearch() {
+    const input = document.getElementById('search-input');
+    const query = input.value.trim();
+    
+    if (query.length < 3) {
+        showAlert('Búsqueda', 'Ingresa al menos 3 caracteres');
+        return;
+    }
+    
+    // Forzar la búsqueda inmediatamente
+    if (searchTimeout) clearTimeout(searchTimeout);
+    
+    fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=mx&limit=5&accept-language=es`)
+        .then(res => res.json())
+        .then(data => {
+            const resultsDiv = document.getElementById('search-results');
+            resultsDiv.innerHTML = '';
+            
+            if (data.length === 0) {
+                resultsDiv.innerHTML = '<div class="search-result-item">Sin resultados en México</div>';
+                resultsDiv.classList.add('active');
+                return;
+            }
+            
+            data.forEach(place => {
+                const div = document.createElement('div');
+                div.className = 'search-result-item';
+                const displayName = place.display_name.split(',')[0] + ', ' + place.display_name.split(',')[1] || place.display_name;
+                div.innerHTML = `<i class="fas fa-map-marker-alt"></i> ${displayName}`;
+                div.onclick = () => {
+                    const lat = parseFloat(place.lat);
+                    const lng = parseFloat(place.lon);
+                    if (map) {
+                        map.flyTo([lat, lng], 16, { duration: 1.5 });
+                        if (window.searchMarker) map.removeLayer(window.searchMarker);
+                        window.searchMarker = L.marker([lat, lng])
+                            .addTo(map)
+                            .bindPopup(displayName)
+                            .openPopup();
+                    }
+                    resultsDiv.classList.remove('active');
+                    document.getElementById('search-input').value = '';
+                };
+                resultsDiv.appendChild(div);
+            });
+            resultsDiv.classList.add('active');
+        })
+        .catch(err => {
+            console.error('Error buscando:', err);
+            showAlert('Error', 'No se pudo realizar la búsqueda');
+        });
 }
 
 document.addEventListener('click', (e) => {
