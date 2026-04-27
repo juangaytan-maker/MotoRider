@@ -30,6 +30,7 @@ let hasSetInitialMapView = false;
 let map = null;
 let userMarker = null;
 window.userMarkers = {};
+window.alertMarkers = {};
 
 // ==================== UTILIDADES ====================
 function getStoredUser() {
@@ -354,7 +355,6 @@ function selectAvatar(element, tier, id) {
     const unlockedAvatars = user.unlockedAvatars || [];
     const avatarKey = tier + '-' + id;
     
-    // ✅ Solo free o ya desbloqueados
     if (tier === 'free') {
         selectAvatarUI(element, tier, id);
         return;
@@ -365,7 +365,6 @@ function selectAvatar(element, tier, id) {
         return;
     }
     
-    // ✅ Bloqueado → abrir modal de pago
     pendingAvatar = { tier: tier, id: id, element: element, price: avatarPrices[tier] };
     openPurchaseModal(tier, id);
 }
@@ -440,7 +439,6 @@ function completePurchase(type) {
         return;
     }
 
-    // ✅ DESBLOQUEAR SOLO AQUÍ
     if (type === 'single') {
         user.unlockedAvatars.push(avatarKey);
         if (pendingAvatar.element) {
@@ -985,9 +983,6 @@ function showBannerOnLogin() { setTimeout(() => { showBanner(); }, 500); }
 function showBannerOnAvatar() { setTimeout(() => { showBanner(); }, 300); }
 
 // ==================== MAPA, UBICACIÓN Y VELOCÍMETRO ====================
-// Agrega esta variable global al inicio (junto a las demás)
-window.userMarkers = {};
-
 function listenToOtherUsers(mapInstance) {
     const currentUser = auth.currentUser;
     if (!currentUser) {
@@ -1010,13 +1005,11 @@ function listenToOtherUsers(mapInstance) {
         snapshot.forEach((doc) => {
             const userData = doc.data();
             
-            // No mostrar al usuario actual
             if (userData.uid === currentUser.uid) {
                 console.log('⏭️ Saltando usuario actual:', userData.name);
                 return;
             }
             
-            // Verificar que esté activo (últimos 5 minutos)
             const lastSeen = userData.lastSeen?.toDate();
             const minutesDiff = lastSeen ? (now - lastSeen) / 60000 : 999;
             
@@ -1052,13 +1045,11 @@ function listenToOtherUsers(mapInstance) {
                 </div>
             `;
 
-            // Si ya existe el marcador, solo actualizamos posición
             if (window.userMarkers[userData.uid]) {
                 console.log('🔄 Actualizando posición de', userData.name);
                 window.userMarkers[userData.uid].setLatLng([latitude, longitude]);
                 window.userMarkers[userData.uid].setPopupContent(popupContent);
             } else {
-                // Si es nuevo, lo creamos
                 console.log('➕ Creando marcador para', userData.name);
                 const marker = L.marker([latitude, longitude], { icon: userIcon })
                     .addTo(mapInstance)
@@ -1067,7 +1058,6 @@ function listenToOtherUsers(mapInstance) {
             }
         });
         
-        // Eliminar marcadores de usuarios desconectados
         Object.keys(window.userMarkers).forEach(uid => {
             if (!activeUids.has(uid)) {
                 console.log('❌ Eliminando usuario desconectado');
@@ -1083,11 +1073,6 @@ function listenToOtherUsers(mapInstance) {
 }
 
 // Escuchar y mostrar alertas en el mapa
-window.alertMarkers = {};
-
-// Escuchar y mostrar alertas en el mapa
-window.alertMarkers = {};
-
 function listenToAlerts(mapInstance) {
     console.log('🚨 Escuchando alertas...');
     
@@ -1104,31 +1089,27 @@ function listenToAlerts(mapInstance) {
         
         snapshot.forEach((doc) => {
             const alertData = doc.data();
-            
             const { lat: latitude, lng: longitude } = alertData.location || {};
-    
-    // Verificar coordenadas válidas
-    if (!latitude || !longitude) {
-        console.log('❌ Alerta', doc.id, 'sin coordenadas válidas. Location:', alertData.location);
-        return;
-    }
-    
-    // Verificar timestamp - usar 24 horas en lugar de 2
-    let hoursDiff = 999;
-    if (alertData.timestamp) {
-        const alertTime = alertData.timestamp.toDate ? alertData.timestamp.toDate() : new Date(alertData.timestamp);
-        hoursDiff = (now - alertTime) / 3600000;
-    }
-    
-    if (hoursDiff > 24) {
-        console.log('⏰ Alerta', doc.id, 'muy vieja:', hoursDiff.toFixed(1), 'horas');
-        return;
-    }
+            
+            if (!latitude || !longitude) {
+                console.log('❌ Alerta', doc.id, 'sin coordenadas válidas');
+                return;
+            }
+            
+            let hoursDiff = 999;
+            if (alertData.timestamp) {
+                const alertTime = alertData.timestamp.toDate ? alertData.timestamp.toDate() : new Date(alertData.timestamp);
+                hoursDiff = (now - alertTime) / 3600000;
+            }
+            
+            if (hoursDiff > 24) {
+                console.log('⏰ Alerta', doc.id, 'muy vieja:', hoursDiff.toFixed(1), 'horas');
+                return;
+            }
             
             activeAlertIds.add(doc.id);
             visibleCount++;
             
-            // Iconos según tipo de alerta
             const alertIcons = {
                 'bache': { icon: '🕳️', color: '#FF9800', label: 'Bache' },
                 'accidente': { icon: '💥', color: '#F44336', label: 'Accidente' },
@@ -1139,7 +1120,6 @@ function listenToAlerts(mapInstance) {
             
             const alertConfig = alertIcons[alertData.type] || alertIcons['peligro'];
             
-            // Crear icono personalizado
             const alertIcon = L.divIcon({
                 className: 'alert-marker',
                 html: `<div style="
@@ -1158,11 +1138,9 @@ function listenToAlerts(mapInstance) {
                 iconAnchor: [16, 16]
             });
             
-            // Si ya existe, solo actualizar
             if (window.alertMarkers[doc.id]) {
                 window.alertMarkers[doc.id].setLatLng([latitude, longitude]);
             } else {
-                // Crear nuevo marcador
                 console.log('✅ Mostrando alerta:', alertData.label || alertData.type, 'en', latitude, longitude);
                 const marker = L.marker([latitude, longitude], { icon: alertIcon })
                     .addTo(mapInstance)
@@ -1179,15 +1157,12 @@ function listenToAlerts(mapInstance) {
             }
         });
         
-        // Eliminar marcadores de alertas viejas
-        Object.keys(window.userMarkers).forEach(uid => {
-    if (!activeUids.has(uid)) {
-        console.log('❌ Eliminando marcador de usuario desconectado:', uid);
-        if (window.userMarkers[uid]) {
-            mapInstance.removeLayer(window.userMarkers[uid]);
-            delete window.userMarkers[uid];
-        }
-    }
+        Object.keys(window.alertMarkers).forEach(id => {
+            if (!activeAlertIds.has(id)) {
+                console.log('🗑️ Eliminando alerta vieja:', id);
+                mapInstance.removeLayer(window.alertMarkers[id]);
+                delete window.alertMarkers[id];
+            }
         });
         
         console.log('🚨 Alertas visibles:', visibleCount, '- Marcadores en mapa:', Object.keys(window.alertMarkers).length);
@@ -1218,7 +1193,6 @@ function getUserLocation() {
             const speedEl = document.getElementById('speed-value'); 
             if (speedEl) speedEl.textContent = kmh;  
 
-            // ✅ Solo centra el mapa la PRIMERA vez
             if (!hasSetInitialMapView && map) {
                 map.setView([lat, lng], 16);
                 hasSetInitialMapView = true;
@@ -1263,14 +1237,12 @@ function initMap() {
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
     L.control.zoom({ position: 'bottomright' }).addTo(map);
     
-    // Inicializar arrays
     window.userMarkers = {};
     window.alertMarkers = {};
     
-    // Escuchar usuarios y alertas
     if (auth.currentUser) {
         listenToOtherUsers(map);
-        listenToAlerts(map); // ✅ NUEVO: Escuchar alertas
+        listenToAlerts(map);
     }
     
     getUserLocation();
@@ -1313,6 +1285,11 @@ window.addEventListener('beforeunload', () => {
 
 // ==================== BÚSQUEDA EN TIEMPO REAL ====================
 function handleSearchInput(e) {
+    if (e.key === 'Enter') {
+        performSearch(e.target.value);
+        return;
+    }
+
     const query = e.target.value.trim();
     const resultsDiv = document.getElementById('search-results');
     
@@ -1325,103 +1302,71 @@ function handleSearchInput(e) {
     }
     
     searchTimeout = setTimeout(() => {
-        // ✅ AGREGAR countrycodes=mx para filtrar solo México
-        fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=mx&limit=5&accept-language=es`)
-            .then(res => res.json())
-            .then(data => {
-                resultsDiv.innerHTML = '';
-                if (data.length === 0) {
-                    resultsDiv.innerHTML = '<div class="search-result-item">Sin resultados en México</div>';
-                    resultsDiv.classList.add('active');
-                    return;
-                }
-                
-                data.forEach(place => {
-                    const div = document.createElement('div');
-                    div.className = 'search-result-item';
-                    // Mostrar solo la parte relevante de la dirección
-                    const displayName = place.display_name.split(',')[0] + ', ' + place.display_name.split(',')[1] || place.display_name;
-                    div.innerHTML = `<i class="fas fa-map-marker-alt"></i> ${displayName}`;
-                    div.onclick = () => {
-                        const lat = parseFloat(place.lat);
-                        const lng = parseFloat(place.lon);
-                        if (map) {
-                            map.flyTo([lat, lng], 16, { duration: 1.5 });
-                            // Agregar marcador temporal
-                            if (window.searchMarker) map.removeLayer(window.searchMarker);
-                            window.searchMarker = L.marker([lat, lng])
-                                .addTo(map)
-                                .bindPopup(displayName)
-                                .openPopup();
-                        }
-                        resultsDiv.classList.remove('active');
-                        document.getElementById('search-input').value = '';
-                    };
-                    resultsDiv.appendChild(div);
-                });
-                resultsDiv.classList.add('active');
-            })
-            .catch(err => {
-                console.error('Error buscando:', err);
-                resultsDiv.innerHTML = '<div class="search-result-item">Error de conexión</div>';
-                resultsDiv.classList.add('active');
-            });
+        performSearch(query);
     }, 300);
 }
 
-// Función para el botón de búsqueda manual
-function performSearch() {
-    const input = document.getElementById('search-input');
-    const query = input.value.trim();
-    
-    if (query.length < 3) {
-        showAlert('Búsqueda', 'Ingresa al menos 3 caracteres');
-        return;
-    }
-    
-    // Forzar la búsqueda inmediatamente
-    if (searchTimeout) clearTimeout(searchTimeout);
-    
-    fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=mx&limit=5&accept-language=es`)
+function performSearch(query) {
+    if (!query || query.length < 3) return;
+
+    const resultsDiv = document.getElementById('search-results');
+    resultsDiv.innerHTML = '<div class="search-result-item" style="text-align:center; color:#666;">Buscando...</div>';
+    resultsDiv.classList.add('active');
+
+    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=mx&limit=5&accept-language=es`;
+
+    fetch(url)
         .then(res => res.json())
         .then(data => {
-            const resultsDiv = document.getElementById('search-results');
             resultsDiv.innerHTML = '';
             
             if (data.length === 0) {
                 resultsDiv.innerHTML = '<div class="search-result-item">Sin resultados en México</div>';
-                resultsDiv.classList.add('active');
                 return;
             }
-            
+
             data.forEach(place => {
                 const div = document.createElement('div');
                 div.className = 'search-result-item';
-                const displayName = place.display_name.split(',')[0] + ', ' + place.display_name.split(',')[1] || place.display_name;
+                const displayName = place.display_name.split(',')[0];
                 div.innerHTML = `<i class="fas fa-map-marker-alt"></i> ${displayName}`;
+                
                 div.onclick = () => {
                     const lat = parseFloat(place.lat);
                     const lng = parseFloat(place.lon);
+                    
                     if (map) {
                         map.flyTo([lat, lng], 16, { duration: 1.5 });
+                        
                         if (window.searchMarker) map.removeLayer(window.searchMarker);
                         window.searchMarker = L.marker([lat, lng])
                             .addTo(map)
                             .bindPopup(displayName)
                             .openPopup();
                     }
+                    
                     resultsDiv.classList.remove('active');
                     document.getElementById('search-input').value = '';
                 };
                 resultsDiv.appendChild(div);
             });
-            resultsDiv.classList.add('active');
         })
         .catch(err => {
-            console.error('Error buscando:', err);
-            showAlert('Error', 'No se pudo realizar la búsqueda');
+            console.error(err);
+            resultsDiv.innerHTML = '<div class="search-result-item">Error de conexión</div>';
         });
 }
+
+// Evento para el botón de búsqueda
+document.addEventListener('DOMContentLoaded', () => {
+    const searchBtn = document.querySelector('.voice-btn');
+    if(searchBtn) {
+        searchBtn.onclick = () => {
+            const input = document.getElementById('search-input');
+            performSearch(input.value);
+        };
+    }
+});
 
 document.addEventListener('click', (e) => {
     const container = document.querySelector('.map-search-sheet');
