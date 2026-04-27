@@ -17,7 +17,7 @@
     <!-- Meta para mejor rendimiento en móviles -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#16213E">
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏍️</text></svg>">
+    <link rel="icon" href="image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏍️</text></svg>">
 </head>
 <body>
     <div class="app-container">
@@ -265,6 +265,7 @@
                 <div class="card" onclick="addKilometers()"><i class="fas fa-plus-circle" style="color:#4CAF50"></i><div class="card-content"><span>Agregar kilómetros</span><strong>Actualizar odómetro</strong></div></div>
                 <div class="card" style="background:#333;border:1px solid red" onclick="logout()"><i class="fas fa-sign-out-alt" style="color:red"></i><div class="card-content"><span style="color:red">Cerrar sesión</span><strong>(Resetear App)</strong></div></div>
             </div>
+            <!-- Barra de navegación INTERNA del Home -->
             <nav class="bottom-nav">
                 <button class="nav-item active"><i class="fas fa-home"></i><span>Home</span></button>
                 <button class="nav-item" onclick="navigateTo('map-screen')"><i class="fas fa-map"></i><span>Mapa</span></button>
@@ -272,31 +273,29 @@
             </nav>
         </div>
 
-        <!-- ==================== PANTALLA MAPA (ESTRUCTURA CORREGIDA) ==================== -->
+        <!-- ==================== PANTALLA MAPA (CORREGIDA) ==================== -->
         <div id="map-screen" class="screen">
-            
-            <!-- Header Superior -->
+            <!-- 1. Header -->
             <div class="map-header">
                 <button class="back-button" onclick="navigateTo('home-screen')"><i class="fas fa-arrow-left"></i></button>
                 <h2 style="color:white; text-align:center; margin:0;">Mapa</h2>
                 <button class="map-action-btn" onclick="centerOnUser()"><i class="fas fa-location-crosshairs"></i></button>
             </div>
             
-            <!-- ✅ EL MAPA (ocupa el espacio central) -->
+            <!-- 2. Contenedor del Mapa (Ocupa el espacio restante con Flexbox) -->
             <div id="leaflet-map"></div>
 
-            <!-- ✅ VELOCÍMETRO MINIMALISTA (flotante sobre el mapa) -->
+            <!-- 3. Elementos Flotantes (Velocímetro y Botón Reporte) -->
             <div class="speedometer-clean">
                 <span id="speed-value" class="speed-value">0</span>
                 <span class="speed-unit">km/h</span>
             </div>
 
-            <!-- ✅ BOTÓN FLOTANTE DE ALERTAS -->
             <button class="report-fab" onclick="openReportModal()" title="Reportar incidente">
                 <i class="fas fa-plus"></i>
             </button>
             
-            <!-- ✅ BUSCADOR Y FAVORITOS (al fondo, sobre el mapa) -->
+            <!-- 4. Buscador y Favoritos (Fijo abajo sobre el mapa) -->
             <div class="map-search-sheet">
                 <div class="search-bar-container">
                     <i class="fas fa-search"></i>
@@ -324,7 +323,7 @@
                 <div id="recent-searches" class="recent-list"></div>
             </div>
 
-            <!-- Navegación Inferior -->
+            <!-- 5. Barra de navegación INTERNA del Mapa -->
             <nav class="bottom-nav">
                 <button class="nav-item" onclick="navigateTo('home-screen')">Home</button>
                 <button class="nav-item active">Mapa</button>
@@ -500,6 +499,7 @@
                     </div>
                 </div>
             </div>
+            <!-- Barra de navegación INTERNA del Perfil -->
             <nav class="bottom-nav">
                 <button class="nav-item" onclick="navigateTo('home-screen')">Home</button>
                 <button class="nav-item" onclick="navigateTo('map-screen')">Mapa</button>
