@@ -420,3 +420,51 @@ img { max-width: 100%; display: block; }
     .action-pill span { display: none; }
     .action-pill { padding: 10px !important; }
 }
+/* 🚨 FORZAR ALTURA DEL MAPA */
+#map-screen #leaflet-map {
+    height: calc(100vh - 350px) !important;
+    min-height: 400px !important;
+    width: 100% !important;
+    display: block !important;
+    background: #f0f0f0 !important; /* Fondo gris para ver si carga */
+}
+
+/* Asegurar que map-screen sea flex */
+#map-screen {
+    display: flex !important;
+    flex-direction: column !important;
+    height: 100% !important;
+}
+
+/* Header fijo arriba */
+#map-screen .map-header {
+    flex-shrink: 0 !important;
+}
+
+/* Buscador fijo abajo */
+#map-screen .map-search-sheet {
+    position: relative !important;
+    flex-shrink: 0 !important;
+    margin-top: auto !important;
+}
+
+/* Velocímetro y botón + visibles SOLO en mapa */
+.speedometer-clean,
+.report-fab {
+    display: none !important;
+}
+
+#map-screen.active .speedometer-clean,
+#map-screen.active .report-fab {
+    display: flex !important;
+}
+
+.speedometer-clean {
+    bottom: 280px !important;
+    left: 20px !important;
+}
+
+.report-fab {
+    bottom: 260px !important;
+    right: 20px !important;
+}
