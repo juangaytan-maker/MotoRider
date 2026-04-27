@@ -446,3 +446,27 @@ img { max-width: 100%; display: block; }
     .action-pill span { display: none; }
     .action-pill { padding: 10px !important; }
 }
+/* ✅ Bottom-nav: visible SOLO en pantallas que la tienen interna */
+.bottom-nav {
+    display: none !important;
+}
+
+#home-screen.active .bottom-nav,
+#profile-screen.active .bottom-nav,
+#my-bikes-screen.active .bottom-nav {
+    display: flex !important;
+}
+
+/* En móvil, fixed y con z-index alto */
+@media (max-width: 768px) {
+    .bottom-nav {
+        position: fixed !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        z-index: 9999 !important;
+        padding: 10px 0 20px 0 !important;
+        box-shadow: 0 -5px 15px rgba(0,0,0,0.3) !important;
+    }
+    .screen.active { padding-bottom: 60px !important; }
+}
